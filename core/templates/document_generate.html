@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Генерация документа{% endblock %}
+{% block content %}
+<h2>Генератор документов</h2>
+<form method="post">{% csrf_token %}
+  <label>Тип:
+    <select name="doc_type">
+      <option value="contract">Договор</option>
+      <option value="invoice">Счет</option>
+      <option value="act">Акт</option>
+    </select>
+  </label>
+  <label>Клиент:
+    <input type="text" name="client" />
+  </label>
+  <label>Сумма:
+    <input type="text" name="total" />
+  </label>
+  <label>Детали:
+    <textarea name="details"></textarea>
+  </label>
+  <button type="submit">Сгенерировать</button>
+</form>
+
+{% if generated_text %}
+  <h3>Сгенерированный текст</h3>
+  <pre>{{ generated_text }}</pre>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,948 @@
+{% extends 'base.html' %}
+{% block title %}AI Workspace - Финансовый трекинг{% endblock %}
+
+{% block extra_head %}
+<!-- Markdown parser -->
+<script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+<!-- Chart.js for interactive charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<!-- Highlight.js for code blocks -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<!-- Client-side encryption utilities -->
+<script src="/static/js/crypto.js"></script>
+
+<style>
+/* ============================================================================
+   AI WORKSPACE STYLES - Современный дизайн в стиле Notion AI / ChatGPT
+   ============================================================================ */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --border-color: #e2e8f0;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --message-user-bg: #3b82f6;
+  --message-user-text: #ffffff;
+  --message-assistant-bg: #f1f5f9;
+  --message-assistant-text: #0f172a;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0e172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --border-color: #334155;
+  --accent: #60a5fa;
+  --accent-hover: #3b82f6;
+  --message-user-bg: #3b82f6;
+  --message-assistant-bg: #1e293b;
+  --message-assistant-text: #f1f5f9;
+}
+
+body {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  line-height: 1.6;
+}
+
+.workspace-container {
+  display: grid;
+  grid-template-columns: 320px 1fr; /* Sidebar | Chat */
+  gap: 24px;
+  height: calc(100vh - 80px);
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+  .workspace-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+}
+/* Sidebar (Chat History) */
+.sidebar-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  min-width: 280px;
+}
+
+.sidebar-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sidebar-search {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.sidebar-actions { display: flex; gap: 6px; }
+.btn-icon { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-secondary); cursor: pointer; }
+.btn-icon:hover { background: var(--bg-tertiary); }
+
+.chat-list { flex: 1; overflow-y: auto; padding: 8px; }
+.chat-item { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-secondary); margin-bottom: 8px; cursor: pointer; }
+.chat-item.active { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.chat-item-title { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+.chat-item-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; display: flex; justify-content: space-between; }
+.chat-item-preview { font-size: 12px; color: var(--text-secondary); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sidebar-footer { padding: 10px 12px; border-top: 1px solid var(--border-color); display: flex; gap: 8px; }
+
+
+/* Chat Interface */
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-primary);
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.message {
+  display: flex;
+  gap: 12px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.message.user .message-avatar {
+  background: var(--message-user-bg);
+  color: var(--message-user-text);
+}
+
+.message.assistant .message-avatar {
+  background: var(--message-assistant-bg);
+  color: var(--message-assistant-text);
+  border: 1px solid var(--border-color);
+}
+
+.message-content {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  word-wrap: break-word;
+}
+
+.message.user .message-content {
+  background: var(--message-user-bg);
+  color: var(--message-user-text);
+  border-bottom-right-radius: 4px;
+}
+
+.message.assistant .message-content {
+  background: var(--message-assistant-bg);
+  color: var(--message-assistant-text);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 4px;
+}
+
+/* Markdown styling */
+.message-content :global(h1),
+.message-content :global(h2),
+.message-content :global(h3),
+.message-content :global(h4) {
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.message-content :global(h1) { font-size: 24px; }
+.message-content :global(h2) { font-size: 20px; }
+.message-content :global(h3) { font-size: 18px; }
+.message-content :global(h4) { font-size: 16px; }
+
+.message-content :global(p) {
+  margin: 8px 0;
+}
+
+.message-content :global(ul),
+.message-content :global(ol) {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.message-content :global(li) {
+  margin: 4px 0;
+}
+
+.message-content :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+}
+
+.message-content :global(th),
+.message-content :global(td) {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.message-content :global(th) {
+  background: var(--bg-tertiary);
+  font-weight: 600;
+}
+
+.message-content :global(code) {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.message-content :global(pre) {
+  background: var(--bg-tertiary);
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.message-content :global(blockquote) {
+  border-left: 3px solid var(--accent);
+  padding-left: 16px;
+  margin: 12px 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.message-content :global(strong) {
+  font-weight: 600;
+}
+
+.message-content :global(em) {
+  font-style: italic;
+}
+
+.chat-input-container {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.chat-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  resize: none;
+  min-height: 44px;
+  max-height: 200px;
+  font-family: inherit;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.send-button {
+  padding: 12px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.send-button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Workspace Panel */
+.workspace-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.workspace-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.workspace-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.workspace-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.file-upload-area {
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--bg-secondary);
+}
+
+.file-upload-area:hover {
+  border-color: var(--accent);
+  background: var(--bg-tertiary);
+}
+
+.file-upload-area.dragover {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-container {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.loading {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.error-message {
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.success-message {
+  padding: 12px 16px;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="workspace-container">
+  <!-- Sidebar: Chat History -->
+  <div class="sidebar-panel">
+    <div class="sidebar-header">
+      <input id="chatSearch" class="sidebar-search" placeholder="Поиск по истории" />
+      <div class="sidebar-actions">
+        <button id="btnNewChat" class="btn-icon" title="Новый чат">＋</button>
+        <button id="btnCompare" class="btn-icon" title="Сравнить чаты">⇄</button>
+      </div>
+    </div>
+    <div id="chatList" class="chat-list"></div>
+    <div class="sidebar-footer">
+      <button id="btnRenameChat" class="btn btn-outline-secondary btn-sm" style="flex:1;">Переименовать</button>
+      <button id="btnDeleteChat" class="btn btn-outline-danger btn-sm">Удалить</button>
+    </div>
+  </div>
+  <!-- Chat Panel -->
+  <div class="chat-panel">
+    <div class="chat-header">
+      <h2>💬 AI Финансовый Аналитик</h2>
+      <div class="d-flex gap-2">
+        <button id="btnUpload" class="btn btn-sm btn-outline-primary">Загрузить файл</button>
+        <button id="clearChat" class="btn btn-sm btn-outline-secondary">Очистить</button>
+      </div>
+    </div>
+    
+    <div class="chat-messages" id="chatMessages">
+      <div class="message assistant">
+        <div class="message-avatar">AI</div>
+        <div class="message-content">
+          <p>Привет! Я ваш AI финансовый аналитик. Я могу помочь вам:</p>
+          <ul>
+            <li>Анализировать финансовые данные</li>
+            <li>Находить тренды и аномалии</li>
+            <li>Давать рекомендации по оптимизации</li>
+            <li>Отвечать на вопросы о ваших финансах</li>
+          </ul>
+          <p>Загрузите файл с транзакциями (CSV, Excel) или начните задавать вопросы!</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="chat-input-container">
+      <div class="chat-input-wrapper">
+        <textarea 
+          id="chatInput" 
+          class="chat-input" 
+          placeholder="Задайте вопрос о ваших финансах..."
+          rows="1"
+        ></textarea>
+        <button id="sendButton" class="send-button">
+          <span>Отправить</span>
+          <i class="bi bi-send"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  
+</div>
+
+<!-- Upload Modal -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Загрузить файл</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf,.docx" />
+        <div style="font-size:12px;color:var(--text-tertiary);margin-top:8px;">CSV, Excel, PDF, DOCX</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="uploadConfirm" class="btn btn-primary">Загрузить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================================
+// AI WORKSPACE JAVASCRIPT
+// ============================================================================
+
+let sessionId = localStorage.getItem('chatSessionId') || null;
+let charts = {};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  initChat();
+  initUploadModal();
+  loadUserSettings();
+  loadChatSessions();
+  wireSidebarControls();
+});
+// Sidebar: chat history
+let allSessions = [];
+
+function wireSidebarControls() {
+  const search = document.getElementById('chatSearch');
+  search.addEventListener('input', () => renderChatList(search.value.trim().toLowerCase()));
+  document.getElementById('btnNewChat').addEventListener('click', newChat);
+  document.getElementById('btnCompare').addEventListener('click', openCompareDialog);
+  document.getElementById('btnRenameChat').addEventListener('click', renameChat);
+  document.getElementById('btnDeleteChat').addEventListener('click', deleteChat);
+}
+
+async function loadChatSessions() {
+  try {
+    const resp = await fetch('/api/chat/sessions/?page_size=100');
+    const data = await resp.json();
+    allSessions = data.sessions || [];
+    renderChatList(document.getElementById('chatSearch').value.trim().toLowerCase());
+  } catch (e) {
+    console.error('Failed to load chat sessions', e);
+  }
+}
+
+function renderChatList(filter = '') {
+  const list = document.getElementById('chatList');
+  list.innerHTML = '';
+  let sessions = allSessions;
+  if (filter) {
+    sessions = sessions.filter(s => (s.title || '').toLowerCase().includes(filter) || (s.session_id || '').includes(filter));
+  }
+  sessions.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'chat-item' + (s.session_id === sessionId ? ' active' : '');
+    item.addEventListener('click', () => openChat(s.session_id));
+    const title = document.createElement('div');
+    title.className = 'chat-item-title';
+    title.textContent = s.title || 'Без названия';
+    const meta = document.createElement('div');
+    meta.className = 'chat-item-meta';
+    const d = new Date(s.updated_at);
+    meta.innerHTML = `<span>${d.toLocaleDateString()}</span><span>${s.message_count} сообщений</span>`;
+    const preview = document.createElement('div');
+    preview.className = 'chat-item-preview';
+    preview.textContent = s.data_summaries ? Object.values(s.data_summaries).map(v => v.original_name).filter(Boolean).slice(0,2).join(', ') : '';
+    item.appendChild(title); item.appendChild(meta); item.appendChild(preview);
+    list.appendChild(item);
+  });
+}
+
+async function openChat(id) {
+  try {
+    const resp = await fetch(`/api/chat/sessions/${id}/`);
+    const data = await resp.json();
+    if (!data.ok) return;
+    // Set active session
+    sessionId = data.session.session_id;
+    localStorage.setItem('chatSessionId', sessionId);
+    // Render messages
+    const box = document.getElementById('chatMessages');
+    box.innerHTML = '';
+    (data.messages || []).forEach(m => addMessage(m.role, m.content));
+    // Refresh sidebar highlighting
+    loadChatSessions();
+  } catch (e) { /* noop */ }
+}
+
+function newChat() {
+  // Start a new chat session lazily (server creates on first send)
+  sessionId = null;
+  localStorage.removeItem('chatSessionId');
+  document.getElementById('chatMessages').innerHTML = '';
+  addMessage('assistant', 'Создан новый чат. Чем помочь?');
+}
+
+async function renameChat() {
+  if (!sessionId) { alert('Сначала откройте чат.'); return; }
+  const title = prompt('Новое название чата:');
+  if (!title) return;
+  const csrftoken = getCookie('csrftoken');
+  const resp = await fetch(`/api/chat/sessions/${sessionId}/rename/`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken }, body: JSON.stringify({ title }) });
+  const data = await resp.json();
+  if (data.ok) loadChatSessions();
+}
+
+async function deleteChat() {
+  if (!sessionId) { alert('Сначала откройте чат.'); return; }
+  if (!confirm('Удалить этот чат полностью?')) return;
+  const csrftoken = getCookie('csrftoken');
+  const resp = await fetch(`/api/chat/sessions/${sessionId}/delete/`, { method: 'POST', headers: { 'X-CSRFToken': csrftoken } });
+  const data = await resp.json();
+  if (data.ok) {
+    sessionId = null; localStorage.removeItem('chatSessionId');
+    document.getElementById('chatMessages').innerHTML = '';
+    loadChatSessions();
+  }
+}
+
+async function openCompareDialog() {
+  // Minimal prompt-based UI
+  const aStart = prompt('Период A - старт (YYYY-MM-DD):');
+  const aEnd = prompt('Период A - конец (YYYY-MM-DD):');
+  const bStart = prompt('Период B - старт (YYYY-MM-DD):');
+  const bEnd = prompt('Период B - конец (YYYY-MM-DD):');
+  if (!aStart || !aEnd || !bStart || !bEnd) return;
+  const csrftoken = getCookie('csrftoken');
+  const resp = await fetch('/api/chat/compare/', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken }, body: JSON.stringify({ items: [ { label: 'Период A', start: aStart, end: aEnd }, { label: 'Период B', start: bStart, end: bEnd } ] }) });
+  const data = await resp.json();
+  if (data.ok) {
+    renderComparisonCharts(data.results || []);
+  }
+}
+
+function renderComparisonCharts(results) {
+  const container = document.getElementById('chartsContainer');
+  container.innerHTML = '';
+  results.forEach((r, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-container';
+    wrap.innerHTML = `<h4 style="margin-top:0;">${r.label}: ${r.start || ''} — ${r.end || ''}</h4><canvas id="cmp_${idx}"></canvas>`;
+    container.appendChild(wrap);
+    const ctx = document.getElementById(`cmp_${idx}`).getContext('2d');
+    const months = Array.from(new Set([...Object.keys(r.income_by_month||{}), ...Object.keys(r.expense_by_month||{})])).sort();
+    const income = months.map(m => r.income_by_month?.[m] || 0);
+    const expense = months.map(m => r.expense_by_month?.[m] || 0);
+    new Chart(ctx, { type: 'bar', data: { labels: months, datasets: [ { label: 'Доходы', data: income, backgroundColor: '#10b981' }, { label: 'Расходы', data: expense, backgroundColor: '#ef4444' } ] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+  });
+}
+
+// Chat functionality
+function initChat() {
+  const chatInput = document.getElementById('chatInput');
+  const sendButton = document.getElementById('sendButton');
+  const clearChat = document.getElementById('clearChat');
+  
+  // Auto-resize textarea
+  chatInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+  });
+  
+  // Send on Enter (Shift+Enter for new line)
+  chatInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+  
+  sendButton.addEventListener('click', sendMessage);
+  clearChat.addEventListener('click', () => {
+    if (confirm('Очистить историю чата?')) {
+      sessionId = null;
+      localStorage.removeItem('chatSessionId');
+      document.getElementById('chatMessages').innerHTML = '';
+      addMessage('assistant', 'История очищена. Как я могу помочь?');
+    }
+  });
+  const btnUpload = document.getElementById('btnUpload');
+  if (btnUpload) btnUpload.addEventListener('click', () => {
+    const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
+    modal.show();
+  });
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+  if (!message) return;
+  
+  // Add user message
+  addMessage('user', message);
+  input.value = '';
+  input.style.height = 'auto';
+  
+  // Show loading
+  const loadingId = addMessage('assistant', '...', true);
+  
+  try {
+    const willUseLocal = false;
+    const anonymize = true;
+    const selectedModel = 'openai/gpt-4o-mini';
+
+    if (!willUseLocal && !anonymize) {
+      const proceed = confirm('Внимание: данные будут отправлены в облако без анонимизации. Продолжить?');
+      if (!proceed) { removeMessage(loadingId); return; }
+    }
+
+    // JSON body + encrypted fetch wrapper
+    const csrftoken = getCookie('csrftoken');
+    const response = await fetch('/ai/chat/', {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrftoken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        use_local: willUseLocal || selectedModel.startsWith('ollama/'),
+        anonymize,
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.ok) {
+      // Update session ID
+      if (data.session_id) {
+        sessionId = data.session_id;
+        localStorage.setItem('chatSessionId', sessionId);
+      }
+      
+      // Remove loading, add response
+      removeMessage(loadingId);
+      addMessage('assistant', data.reply);
+      
+      // Visuals are rendered in chat by AI output now
+    } else {
+      removeMessage(loadingId);
+      addMessage('assistant', `Ошибка: ${data.error || 'Неизвестная ошибка'}`);
+    }
+  } catch (error) {
+    removeMessage(loadingId);
+    addMessage('assistant', `Ошибка соединения: ${error.message}`);
+  }
+}
+
+function addMessage(role, content, isLoading = false) {
+  const messagesContainer = document.getElementById('chatMessages');
+  const messageId = 'msg-' + Date.now();
+  
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${role}`;
+  messageDiv.id = messageId;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'message-avatar';
+  avatar.textContent = role === 'user' ? 'Вы' : 'AI';
+  
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  
+  if (isLoading) {
+    contentDiv.innerHTML = '<div class="loading"></div>';
+  } else {
+    // Render markdown
+    if (role === 'assistant') {
+      contentDiv.innerHTML = marked.parse(content);
+      // Highlight code blocks
+      contentDiv.querySelectorAll('pre code').forEach((block) => {
+        hljs.highlightElement(block);
+      });
+    } else {
+      contentDiv.textContent = content;
+    }
+  }
+  
+  messageDiv.appendChild(avatar);
+  messageDiv.appendChild(contentDiv);
+  messagesContainer.appendChild(messageDiv);
+  
+  // Scroll to bottom
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  
+  return messageId;
+}
+
+function removeMessage(messageId) {
+  const msg = document.getElementById(messageId);
+  if (msg) msg.remove();
+}
+
+function initUploadModal() {
+  const input = document.getElementById('fileInput');
+  const btn = document.getElementById('uploadConfirm');
+  btn.addEventListener('click', async () => {
+    if (!input.files || !input.files[0]) return;
+    await handleFile(input.files[0]);
+    const modalEl = document.getElementById('uploadModal');
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    modal?.hide();
+    input.value = '';
+  });
+}
+
+async function handleFile(file) {
+  try {
+    const formData = new FormData();
+    formData.append('upload_file', file);
+    formData.append('import_to_db', 'on');
+    if (sessionId) formData.append('session_id', sessionId);
+    
+    const csrftoken = getCookie('csrftoken');
+    const response = await fetch('/api/upload/', {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-CSRFToken': csrftoken
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.ok) {
+      setTimeout(() => {
+        addMessage('assistant', 'Файл загружен. Анализирую данные...', true);
+        sendMessage();
+      }, 500);
+    } else {
+      addMessage('assistant', `Ошибка: ${data.error}`);
+    }
+  } catch (error) {
+    addMessage('assistant', `Ошибка: ${error.message}`);
+  }
+}
+
+// Removed workspace stats/charts; visuals should be provided by AI responses
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0
+  }).format(value);
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ==========================
+// User settings (simplified)
+// ==========================
+async function loadUserSettings() {
+  try {
+    const resp = await fetch('/api/user/settings/');
+    const s = await resp.json();
+  } catch (e) { /* noop */ }
+}
+
+async function saveUserSettings() { /* simplified */ }
+
+// Export all data as encrypted file (.sbenc)
+async function exportEncryptedAll() { /* removed from minimal UI */ }
+
+// Delete all user data
+async function deleteAllData() {
+  if (!confirm('Удалить все ваши данные без возможности восстановления?')) return;
+  try {
+    const csrftoken = getCookie('csrftoken');
+    const resp = await fetch('/api/delete-all/', { method: 'POST', headers: { 'X-CSRFToken': csrftoken } });
+    const data = await resp.json();
+    if (data.ok) {
+      alert('Все данные удалены.');
+      document.getElementById('chatMessages').innerHTML = '';
+    } else {
+      alert('Ошибка удаления: ' + (data.error || '')); 
+    }
+  } catch (e) {
+    alert('Ошибка удаления: ' + e.message);
+  }
+}
+</script>
+{% endblock %}
+

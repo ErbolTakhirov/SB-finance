@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Документы{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Документы</h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-primary" href="/documents/create/"><i class="bi bi-plus-circle"></i> Создать документ</a>
+  </div>
+  </div>
+
+<div class="app-card p-3">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Тип</th>
+          <th>Создан</th>
+          <th>Фрагмент</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for i in items %}
+        <tr>
+          <td>{{ i.id }}</td>
+          <td>{{ i.doc_type }}</td>
+          <td>{{ i.created_at }}</td>
+          <td>{{ i.generated_text|truncatechars:60 }}</td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm" role="group">
+              <a class="btn btn-outline-primary" href="/documents/{{ i.id }}/edit/"><i class="bi bi-pencil"></i></a>
+              <a class="btn btn-outline-danger" href="/documents/{{ i.id }}/delete/"><i class="bi bi-trash"></i></a>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-center text-muted">Нет документов</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+

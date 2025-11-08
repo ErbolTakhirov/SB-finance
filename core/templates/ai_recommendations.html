@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}AI/ML рекомендации{% endblock %}
+{% block content %}
+<h2>AI/ML рекомендации</h2>
+
+<div>
+  <h3>Прогноз прибыли следующего месяца</h3>
+  {% if forecast %}
+    <p><strong>{{ forecast }}</strong></p>
+  {% else %}
+    <p>Недостаточно данных для прогноза.</p>
+  {% endif %}
+</div>
+
+<div>
+  <h3>Советы</h3>
+  <ul>
+    {% for r in recommendations %}
+      <li>{{ r }}</li>
+    {% empty %}
+      <li>Нет рекомендаций</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
+

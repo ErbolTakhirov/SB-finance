@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Вход - Финансовый трекинг{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 100px auto; padding: 40px; background: var(--bg-primary); border-radius: var(--radius); box-shadow: var(--shadow-lg);">
+  <h2 style="margin-bottom: 30px; text-align: center;">Вход в систему</h2>
+  
+  {% if form.errors %}
+    <div style="padding: 12px; margin-bottom: 20px; background: #fee; border: 1px solid #fcc; border-radius: 8px; color: #c33;">
+      Неверное имя пользователя или пароль.
+    </div>
+  {% endif %}
+  
+  <form method="post">
+    {% csrf_token %}
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: 500;">{{ form.username.label }}</label>
+      {{ form.username }}
+      {% if form.username.errors %}
+        <div style="color: #c33; font-size: 14px; margin-top: 4px;">{{ form.username.errors }}</div>
+      {% endif %}
+    </div>
+    
+    <div style="margin-bottom: 20px;">
+      <label style="display: block; margin-bottom: 8px; font-weight: 500;">{{ form.password.label }}</label>
+      {{ form.password }}
+      {% if form.password.errors %}
+        <div style="color: #c33; font-size: 14px; margin-top: 4px;">{{ form.password.errors }}</div>
+      {% endif %}
+    </div>
+    
+    <button type="submit" style="width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer;">
+      Войти
+    </button>
+  </form>
+  
+  <div style="margin-top: 20px; text-align: center; color: var(--text-secondary);">
+    Нет аккаунта? <a href="{% url 'register' %}" style="color: var(--accent); text-decoration: none;">Зарегистрироваться</a>
+  </div>
+</div>
+{% endblock %}
+

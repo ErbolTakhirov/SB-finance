@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SB Finance AI{% endblock %}</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+          --brand: #0d6efd;
+          --brand-600: #0b5ed7;
+          --ink-900: #101828;
+          --ink-700: #344054;
+          --ink-500: #667085;
+          --bg-soft: #f8fafc;
+          --card-radius: 14px;
+          --card-shadow: 0 6px 24px rgba(16,24,40,.06);
+          --gap-1: 6px; --gap-2: 10px; --gap-3: 16px; --gap-4: 24px;
+        }
+        body { background: var(--bg-soft); color: var(--ink-900); }
+        .navbar-brand { font-weight: 800; letter-spacing: .3px; }
+        .content-wrap { padding-top: 24px; padding-bottom: 40px; }
+        .app-card { border-radius: var(--card-radius); box-shadow: var(--card-shadow); border: 1px solid rgba(16,24,40,.06); background: #fff; }
+        .app-section-title { font-weight: 700; letter-spacing: .2px; color: var(--ink-700); }
+        .btn-icon { display: inline-flex; align-items: center; gap: 6px; }
+        .chart { max-width: 100%; height: auto; border: 1px solid rgba(16,24,40,.06); border-radius: 10px; }
+        .actions { display: flex; gap: var(--gap-2); flex-wrap: wrap; align-items: center; }
+        textarea { width: 100%; min-height: 160px; }
+        .form-control, .form-select { border-radius: 10px; }
+        .alert { border-radius: 12px; }
+        .card-gradient { background: linear-gradient(180deg, rgba(13,110,253,.06), rgba(13,110,253,.02)); }
+        .footer { color: #667085; }
+        .muted { color: var(--ink-500); }
+        .grid-gutter { gap: var(--gap-4); }
+        .kpi { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: var(--gap-3); }
+        .kpi .value { font-size: 1.375rem; font-weight: 800; }
+        @media (max-width: 576px) {
+          .navbar .btn { padding: .375rem .5rem; }
+          .kpi { grid-template-columns: 1fr; }
+        }
+        /* Tables */
+        .table> :not(caption)>*>* { vertical-align: middle; }
+        .table thead th { font-weight: 600; color: #475467; }
+        /* Dark mode */
+        [data-theme="dark"] { color-scheme: dark; }
+        [data-theme="dark"] body { background: #0B1220; color: #E6E8EC; }
+        [data-theme="dark"] .navbar, [data-theme="dark"] .dropdown-menu { background: #0E172A !important; }
+        [data-theme="dark"] .app-card, [data-theme="dark"] .card, [data-theme="dark"] .table { background: #0E172A; color: #E6E8EC; }
+        [data-theme="dark"] .table thead th { color: #CBD5E1; }
+        [data-theme="dark"] .form-control, [data-theme="dark"] .form-select { background: #0B1220; color: #E6E8EC; border-color: #1F2937; }
+        [data-theme="dark"] .alert { background: #10203A; border-color: #1F3A5A; color: #E6F0FF; }
+        [data-theme="dark"] .card-gradient { background: linear-gradient(180deg, rgba(13,110,253,.18), rgba(13,110,253,.05)); }
+    </style>
+    {% block extra_head %}{% endblock %}
+    <script>
+      (function() {
+        const saved = localStorage.getItem('theme');
+        if (saved) document.documentElement.setAttribute('data-theme', saved);
+      })();
+    </script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><text y='1em' font-size='96'>💼</text></svg>">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-light border-bottom sticky-top" style="background: #ffffffaa; backdrop-filter: blur(8px);">
+      <div class="container">
+        <a class="navbar-brand" href="/">SB Finance AI</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          {% if user.is_authenticated %}
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="{% url 'workspace' %}">Чат</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Дэшборд</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'income_list' %}">Доходы</a></li>
+            <li class="nav-item"><a class="nav-link" href="{% url 'expense_list' %}">Расходы</a></li>
+          </ul>
+          {% endif %}
+          <div class="d-flex gap-2">
+            {% if user.is_authenticated %}
+              <span class="text-muted me-2" style="line-height: 2.2;">{{ user.username }}</span>
+              <a class="btn btn-outline-secondary btn-sm" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Выход</a>
+            {% else %}
+              <a class="btn btn-outline-primary btn-sm" href="{% url 'login' %}"><i class="bi bi-box-arrow-in-right"></i> Вход</a>
+              <a class="btn btn-primary btn-sm" href="{% url 'register' %}"><i class="bi bi-person-plus"></i> Регистрация</a>
+            {% endif %}
+            <button id="themeToggle" class="btn btn-outline-primary btn-sm" type="button"><i class="bi bi-moon-stars"></i></button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="content-wrap container">
+      {% if messages %}
+        <div class="mb-3">
+          {% for message in messages %}
+            <div class="alert alert-info d-flex align-items-center gap-2" role="alert">
+              <i class="bi bi-info-circle"></i>
+              <div>{{ message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-top py-3">
+      <div class="container d-flex justify-content-between align-items-center footer">
+        <small>© {{ now|default:2025 }} SB Finance AI</small>
+        <small>Версия интерфейса: 1.0</small>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.getElementById('themeToggle').addEventListener('click', function() {
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        this.innerHTML = next === 'dark' ? '<i class="bi bi-brightness-high"></i>' : '<i class="bi bi-moon-stars"></i>';
+      });
+    </script>
+  </body>
+</html>
+
