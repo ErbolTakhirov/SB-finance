@@ -321,11 +321,6 @@ DATABASES = {
 python manage.py collectstatic --noinput
 ```
 
-4. **Настройте веб-сервер** (Nginx + Gunicorn)
-
-## 📝 Лицензия
-
-MIT License - см. файл [LICENSE](LICENSE)
 
 ## 🤝 Вклад в проект
 
@@ -336,17 +331,5 @@ MIT License - см. файл [LICENSE](LICENSE)
 4. Push в branch (`git push origin feature/AmazingFeature`)
 5. Откройте Pull Request
 
-## 📧 Контакты
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/sb-finance-ai/issues)
-- **Email**: your.email@example.com
-
-## 🙏 Благодарности
-
-- Django Community
-- OpenRouter за AI API
-- Все контрибьюторы проекта
-
----
-
-**Сделано с ❤️ для малого бизнеса**
+**Сделано с ❤️ by Konuktor**
