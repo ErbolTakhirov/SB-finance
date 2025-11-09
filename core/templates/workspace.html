@@ -549,11 +549,26 @@ body {
       <div class="modal-body">
         <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf,.docx" />
         <div style="font-size:12px;color:var(--text-tertiary);margin-top:8px;">CSV, Excel, PDF, DOCX</div>
+        <div id="uploadWarning" style="display:none;margin-top:12px;padding:8px;background:var(--warning);color:#000;border-radius:6px;font-size:13px;"></div>
       </div>
       <div class="modal-footer">
         <button type="button" id="uploadConfirm" class="btn btn-primary">Загрузить</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Upload Progress Overlay -->
+<div id="uploadOverlay" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center;">
+  <div style="background:var(--bg-primary);padding:32px;border-radius:16px;max-width:400px;text-align:center;box-shadow:var(--shadow-lg);">
+    <div class="spinner-border text-primary" role="status" style="width:48px;height:48px;margin-bottom:16px;">
+      <span class="visually-hidden">Загрузка...</span>
+    </div>
+    <h5 style="color:var(--text-primary);margin-bottom:8px;">Анализ файла</h5>
+    <p id="uploadProgressText" style="color:var(--text-secondary);margin-bottom:16px;">Обработка файла, пожалуйста подождите...</p>
+    <div id="uploadProgressFileName" style="color:var(--text-tertiary);font-size:14px;margin-bottom:16px;"></div>
+    <button id="uploadCancelBtn" type="button" class="btn btn-sm btn-outline-secondary" style="display:none;">Отменить</button>
   </div>
 </div>
 
@@ -564,6 +579,8 @@ body {
 
 let sessionId = localStorage.getItem('chatSessionId') || null;
 let charts = {};
+let isUploading = false;
+let uploadStatusCheckInterval = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -572,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadUserSettings();
   loadChatSessions();
   wireSidebarControls();
+  checkUploadStatus(); // Проверяем статус при загрузке страницы
 });
 // Sidebar: chat history
 let allSessions = [];
@@ -637,6 +655,25 @@ async function openChat(id) {
     // Refresh sidebar highlighting
     loadChatSessions();
   } catch (e) { /* noop */ }
+}
+
+async function loadChatHistory(sessionIdToLoad = null) {
+  // Перезагружает историю чата для текущей или указанной сессии
+  const targetSessionId = sessionIdToLoad || sessionId;
+  if (!targetSessionId) return;
+  
+  try {
+    const resp = await fetch(`/api/chat/sessions/${targetSessionId}/`);
+    const data = await resp.json();
+    if (!data.ok) return;
+    
+    // Обновляем сообщения (очищаем и заново добавляем)
+    const box = document.getElementById('chatMessages');
+    box.innerHTML = '';
+    (data.messages || []).forEach(m => addMessage(m.role, m.content));
+  } catch (e) {
+    console.error('Ошибка загрузки истории чата:', e);
+  }
 }
 
 function newChat() {
@@ -807,7 +844,13 @@ function addMessage(role, content, isLoading = false) {
   
   const avatar = document.createElement('div');
   avatar.className = 'message-avatar';
-  avatar.textContent = role === 'user' ? 'Вы' : 'AI';
+  if (role === 'system') {
+    avatar.textContent = '⚙️';
+    avatar.style.background = 'var(--bg-tertiary)';
+    avatar.style.border = '1px solid var(--border-color)';
+  } else {
+    avatar.textContent = role === 'user' ? 'Вы' : 'AI';
+  }
   
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
@@ -822,6 +865,11 @@ function addMessage(role, content, isLoading = false) {
       contentDiv.querySelectorAll('pre code').forEach((block) => {
         hljs.highlightElement(block);
       });
+    } else if (role === 'system') {
+      // Системные сообщения отображаются с markdown, но со специальным стилем
+      contentDiv.innerHTML = marked.parse(content);
+      contentDiv.style.fontStyle = 'italic';
+      contentDiv.style.opacity = '0.9';
     } else {
       contentDiv.textContent = content;
     }
@@ -845,10 +893,29 @@ function removeMessage(messageId) {
 function initUploadModal() {
   const input = document.getElementById('fileInput');
   const btn = document.getElementById('uploadConfirm');
+  const modalEl = document.getElementById('uploadModal');
+  const warningDiv = document.getElementById('uploadWarning');
+  
+  // Проверяем статус загрузки при открытии модального окна
+  modalEl.addEventListener('show.bs.modal', async () => {
+    await checkUploadStatus();
+    if (isUploading) {
+      warningDiv.style.display = 'block';
+      warningDiv.textContent = 'Пожалуйста, дождитесь завершения анализа текущего файла';
+      btn.disabled = true;
+    } else {
+      warningDiv.style.display = 'none';
+      btn.disabled = false;
+    }
+  });
+  
   btn.addEventListener('click', async () => {
     if (!input.files || !input.files[0]) return;
+    if (isUploading) {
+      alert('Пожалуйста, дождитесь завершения анализа текущего файла');
+      return;
+    }
     await handleFile(input.files[0]);
-    const modalEl = document.getElementById('uploadModal');
     const modal = bootstrap.Modal.getInstance(modalEl);
     modal?.hide();
     input.value = '';
@@ -856,7 +923,16 @@ function initUploadModal() {
 }
 
 async function handleFile(file) {
+  if (isUploading) {
+    alert('Пожалуйста, дождитесь завершения анализа текущего файла');
+    return;
+  }
+  
   try {
+    // Показываем overlay загрузки
+    showUploadOverlay(file.name);
+    isUploading = true;
+    
     const formData = new FormData();
     formData.append('upload_file', file);
     formData.append('import_to_db', 'on');
@@ -874,16 +950,92 @@ async function handleFile(file) {
     const data = await response.json();
     
     if (data.ok) {
-      setTimeout(() => {
-        addMessage('assistant', 'Файл загружен. Анализирую данные...', true);
-        sendMessage();
-      }, 500);
+      // Начинаем проверку статуса загрузки
+      startUploadStatusCheck();
+      
+      // Файл загружен, ожидаем завершения анализа
+      // Системное сообщение будет отправлено автоматически сервером
     } else {
-      addMessage('assistant', `Ошибка: ${data.error}`);
+      // Обрабатываем ошибку
+      hideUploadOverlay();
+      isUploading = false;
+      
+      if (data.is_processing) {
+        // Есть активная загрузка
+        alert(`Пожалуйста, дождитесь завершения анализа текущего файла: ${data.active_file || 'другого файла'}`);
+        showUploadOverlay(data.active_file || 'текущего файла');
+        startUploadStatusCheck();
+      } else {
+        // Другая ошибка
+        addMessage('system', `❌ Ошибка загрузки: ${data.error}`);
+      }
     }
   } catch (error) {
-    addMessage('assistant', `Ошибка: ${error.message}`);
+    hideUploadOverlay();
+    isUploading = false;
+    addMessage('system', `❌ Ошибка загрузки: ${error.message}`);
   }
+}
+
+function showUploadOverlay(fileName) {
+  const overlay = document.getElementById('uploadOverlay');
+  const fileNameDiv = document.getElementById('uploadProgressFileName');
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  if (fileNameDiv) {
+    fileNameDiv.textContent = fileName || 'Файл';
+  }
+}
+
+function hideUploadOverlay() {
+  const overlay = document.getElementById('uploadOverlay');
+  overlay.style.display = 'none';
+  if (uploadStatusCheckInterval) {
+    clearInterval(uploadStatusCheckInterval);
+    uploadStatusCheckInterval = null;
+  }
+}
+
+async function checkUploadStatus() {
+  try {
+    const response = await fetch('/api/upload/status/');
+    const data = await response.json();
+    
+    if (data.is_processing) {
+      isUploading = true;
+      if (!document.getElementById('uploadOverlay').style.display || 
+          document.getElementById('uploadOverlay').style.display === 'none') {
+        showUploadOverlay(data.file.original_name);
+      }
+      return true;
+    } else {
+      isUploading = false;
+      hideUploadOverlay();
+      // Перезагружаем историю чата, чтобы получить системные сообщения
+      if (sessionId) {
+        loadChatHistory(sessionId);
+      }
+      return false;
+    }
+  } catch (error) {
+    console.error('Ошибка проверки статуса загрузки:', error);
+    return false;
+  }
+}
+
+function startUploadStatusCheck() {
+  // Проверяем статус каждые 2 секунды
+  if (uploadStatusCheckInterval) {
+    clearInterval(uploadStatusCheckInterval);
+  }
+  uploadStatusCheckInterval = setInterval(async () => {
+    const stillProcessing = await checkUploadStatus();
+    if (!stillProcessing) {
+      clearInterval(uploadStatusCheckInterval);
+      uploadStatusCheckInterval = null;
+    }
+  }, 2000);
 }
 
 // Removed workspace stats/charts; visuals should be provided by AI responses
@@ -945,4 +1097,5 @@ async function deleteAllData() {
 }
 </script>
 {% endblock %}
+
 

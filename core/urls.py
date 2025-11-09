@@ -39,6 +39,7 @@ urlpatterns = [
     
     # Управление файлами
     path('api/files/', views.uploaded_files_api, name='uploaded_files_api'),
+    path('api/upload/status/', views.upload_status_api, name='upload_status_api'),
     path('api/files/<int:file_id>/delete/', views.delete_uploaded_file, name='delete_uploaded_file'),
     path('api/files/<int:file_id>/delete-transactions/', views.delete_transactions_by_file, name='delete_transactions_by_file'),
     path('api/files/delete-transactions/', views.delete_transactions_by_files, name='delete_transactions_by_files'),

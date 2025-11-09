@@ -641,6 +641,31 @@ def upload_api(request):
     if not request.user or not request.user.is_authenticated:
         return JsonResponse({'ok': False, 'error': 'Требуется авторизация'}, status=401)
     
+    # КРИТИЧНО: Проверка на активную загрузку - запрещаем одновременную загрузку
+    active_upload = UploadedFile.objects.filter(
+        user=request.user,
+        processed=False
+    ).order_by('-uploaded_at').first()
+    
+    if active_upload:
+        # Проверяем, не прошло ли слишком много времени (например, более 5 минут) - возможно, загрузка зависла
+        from django.utils import timezone
+        from datetime import timedelta
+        time_diff = timezone.now() - active_upload.uploaded_at
+        if time_diff > timedelta(minutes=5):
+            # Если загрузка зависла, помечаем её как обработанную и разрешаем новую
+            active_upload.processed = True
+            active_upload.metadata = active_upload.metadata or {}
+            active_upload.metadata['status'] = 'timeout'
+            active_upload.save()
+        else:
+            return JsonResponse({
+                'ok': False,
+                'error': 'Пожалуйста, дождитесь завершения анализа текущего файла',
+                'is_processing': True,
+                'active_file': active_upload.original_name
+            }, status=429)
+    
     f = request.FILES.get('upload_file')
     import_to_db = (request.POST.get('import_to_db') or 'on') == 'on'
     session_id = request.POST.get('session_id') or None
@@ -659,9 +684,32 @@ def upload_api(request):
         file_for_db = ContentFile(file_content, name=f.name)
     except Exception as e:
         import traceback
-        print(f"Ошибка чтения файла: {e}")
+        error_msg = str(e)
+        print(f"Ошибка чтения файла: {error_msg}")
         print(traceback.format_exc())
-        return JsonResponse({'ok': False, 'error': f'Ошибка чтения файла: {str(e)}'}, status=500)
+        
+        # Отправляем ошибку в чат, если есть session_id
+        if session_id:
+            try:
+                sess = ChatSession.objects.get(session_id=session_id, user=request.user)
+                error_message_content = f"❌ Не удалось прочитать файл **{f.name}**. Ошибка: {error_msg}. Попробуйте другой файл или обратитесь в поддержку."
+                ChatMessage.objects.create(
+                    session=sess,
+                    role='system',
+                    content=error_message_content,
+                    content_hash=_compute_content_hash(error_message_content),
+                    metadata={
+                        'error': True,
+                        'error_message': error_msg,
+                        'file_name': f.name,
+                    }
+                )
+            except ChatSession.DoesNotExist:
+                pass
+            except Exception as ex:
+                print(f"Ошибка создания сообщения об ошибке чтения файла: {ex}")
+        
+        return JsonResponse({'ok': False, 'error': f'Ошибка чтения файла: {error_msg}'}, status=500)
     
     try:
         summary = {}
@@ -742,6 +790,42 @@ def upload_api(request):
                 sess.data_summaries = ds
                 sess.save()
                 attached_session_id = sess.session_id
+                
+                # КРИТИЧНО: Отправляем системное сообщение в чат о завершении анализа
+                try:
+                    # Формируем сообщение о завершении анализа
+                    system_message_content = f"✅ Анализ файла **{file_obj.original_name}** завершён. "
+                    
+                    # Добавляем информацию о импортированных данных
+                    if isinstance(imported, dict):
+                        num_incomes = imported.get('incomes', 0)
+                        num_expenses = imported.get('expenses', 0)
+                        if num_incomes > 0 or num_expenses > 0:
+                            system_message_content += f"Загружено: {num_incomes} доходов, {num_expenses} расходов. "
+                    
+                    # Добавляем информацию о дубликатах, если есть
+                    if isinstance(import_stats, dict) and import_stats.get('duplicates_skipped', 0) > 0:
+                        system_message_content += f"Пропущено дубликатов: {import_stats['duplicates_skipped']}. "
+                    
+                    system_message_content += "Результаты доступны ниже/на дашборде."
+                    
+                    # Создаем системное сообщение
+                    ChatMessage.objects.create(
+                        session=sess,
+                        role='system',
+                        content=system_message_content,
+                        content_hash=_compute_content_hash(system_message_content),
+                        metadata={
+                            'file_id': file_obj.id,
+                            'file_name': file_obj.original_name,
+                            'imported': imported,
+                            'import_stats': import_stats,
+                        }
+                    )
+                except Exception as e:
+                    import traceback
+                    print(f"Ошибка создания системного сообщения: {e}")
+                    print(traceback.format_exc())
             except ChatSession.DoesNotExist:
                 attached_session_id = None
 
@@ -834,6 +918,48 @@ def upload_api(request):
         error_msg = str(ex)
         print(f"Ошибка в upload_api: {error_msg}")
         print(error_trace)
+        
+        # Помечаем файл как обработанный с ошибкой (если он был создан)
+        file_obj_exists = False
+        try:
+            # Проверяем, существует ли file_obj в локальной области видимости
+            if 'file_obj' in locals() and file_obj and hasattr(file_obj, 'id'):
+                file_obj.processed = True
+                file_obj.metadata = file_obj.metadata or {}
+                file_obj.metadata['error'] = True
+                file_obj.metadata['error_message'] = error_msg
+                file_obj.save()
+                file_obj_exists = True
+        except Exception as e:
+            print(f"Ошибка при обновлении file_obj: {e}")
+        
+        # КРИТИЧНО: Отправляем ошибку в чат, если есть session_id
+        session_id_for_error = request.POST.get('session_id') or None
+        if session_id_for_error:
+            try:
+                sess = ChatSession.objects.get(session_id=session_id_for_error, user=request.user)
+                # Формируем сообщение об ошибке
+                if file_obj_exists:
+                    error_message_content = f"❌ Не удалось проанализировать файл **{file_obj.original_name}**. Ошибка: {error_msg}. Попробуйте другой файл или обратитесь в поддержку."
+                else:
+                    error_message_content = f"❌ Не удалось проанализировать файл. Ошибка: {error_msg}. Попробуйте другой файл или обратитесь в поддержку."
+                
+                ChatMessage.objects.create(
+                    session=sess,
+                    role='system',
+                    content=error_message_content,
+                    content_hash=_compute_content_hash(error_message_content),
+                    metadata={
+                        'error': True,
+                        'error_message': error_msg,
+                        'file_id': file_obj.id if file_obj_exists else None,
+                    }
+                )
+            except ChatSession.DoesNotExist:
+                pass
+            except Exception as e:
+                print(f"Ошибка создания сообщения об ошибке: {e}")
+        
         # В режиме DEBUG возвращаем детали ошибки
         response_data = {
             'ok': False,
@@ -1689,6 +1815,34 @@ def uploaded_files_api(request):
         })
     
     return JsonResponse({'files': files_data})
+
+
+@login_required
+def upload_status_api(request):
+    """API для проверки статуса активной загрузки файла"""
+    active_upload = UploadedFile.objects.filter(
+        user=request.user,
+        processed=False
+    ).order_by('-uploaded_at').first()
+    
+    if active_upload:
+        from django.utils import timezone
+        from datetime import timedelta
+        time_diff = timezone.now() - active_upload.uploaded_at
+        
+        return JsonResponse({
+            'is_processing': True,
+            'file': {
+                'id': active_upload.id,
+                'original_name': active_upload.original_name,
+                'uploaded_at': active_upload.uploaded_at.isoformat(),
+                'processing_time_seconds': int(time_diff.total_seconds()),
+            }
+        })
+    else:
+        return JsonResponse({
+            'is_processing': False
+        })
 
 
 @login_required
