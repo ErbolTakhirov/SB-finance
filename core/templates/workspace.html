@@ -41,25 +41,29 @@
 }
 
 [data-theme="dark"] {
-  --bg-primary: #0e172a;
-  --bg-secondary: #1e293b;
-  --bg-tertiary: #334155;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
-  --border-color: #334155;
-  --accent: #60a5fa;
-  --accent-hover: #3b82f6;
-  --message-user-bg: #3b82f6;
-  --message-assistant-bg: #1e293b;
-  --message-assistant-text: #f1f5f9;
+  --bg-primary: #000000;
+  --bg-secondary: #0D0D0D;
+  --bg-tertiary: #1A1A1A;
+  --text-primary: #ECECEC;
+  --text-secondary: #D1D1D1;
+  --text-tertiary: #A8A8A8;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --accent: #10A37F;
+  --accent-hover: #0D8F6E;
+  --message-user-bg: #10A37F;
+  --message-assistant-bg: transparent;
+  --message-assistant-text: #ECECEC;
 }
 
 body {
-  background: var(--bg-secondary);
+  background: var(--bg-primary);
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
   line-height: 1.6;
+}
+
+[data-theme="dark"] body {
+  background: #000000;
 }
 
 .workspace-container {
@@ -72,8 +76,241 @@ body {
   margin: 0 auto;
 }
 
+.main-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: calc(100vh - 80px);
+}
+
+.analytics-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.analytics-panel.empty .analytics-warnings,
+.analytics-panel.empty .analytics-content {
+  display: none;
+}
+
+.analytics-panel.empty .analytics-empty-state {
+  padding: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.analytics-panel:not(.empty) .analytics-empty-state {
+  display: none;
+}
+
+.analytics-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.analytics-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.analytics-subtitle {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.analytics-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.analytics-warnings {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.analytics-warnings.hidden {
+  display: none;
+}
+
+.analytics-warning-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: var(--warning);
+  font-size: 12px;
+}
+
+.analytics-content {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
+
+.analytics-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.analytics-grid.secondary {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.analytics-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 220px;
+  cursor: pointer;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.analytics-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+
+.analytics-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.analytics-card h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.analytics-card canvas {
+  flex: 1;
+  min-height: 180px;
+}
+
+.analytics-card .chart-meta {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.analytics-detail {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  min-height: 260px;
+  overflow: auto;
+}
+
+.analytics-detail h4 {
+  margin-top: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.analytics-detail .detail-meta {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.analytics-detail .detail-meta span {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-right: 4px;
+}
+
+.analytics-alerts {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  font-size: 12px;
+  color: var(--warning);
+}
+
+.analytics-alerts ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.analytics-alerts li {
+  margin-bottom: 4px;
+}
+
+.analytics-detail p {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.analytics-detail table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.analytics-detail th,
+.analytics-detail td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.analytics-detail tr:last-child td {
+  border-bottom: none;
+}
+
+.analytics-placeholder {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+}
+
+.analytics-placeholder h4 {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 @media (max-width: 1200px) {
   .workspace-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .analytics-content { grid-template-columns: 1fr; }
 }
 /* Sidebar (Chat History) */
 .sidebar-panel {
@@ -124,41 +361,55 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-color);
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
   overflow: hidden;
+  flex: 1;
+}
+
+[data-theme="dark"] .chat-panel {
+  background: #000000;
 }
 
 .chat-header {
-  padding: 16px 20px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--border-color);
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   background: var(--bg-primary);
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .chat-header h2 {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .message {
   display: flex;
-  gap: 12px;
+  gap: 0;
+  padding: 20px 0;
   animation: fadeIn 0.3s ease-in;
+  position: relative;
 }
 
 @keyframes fadeIn {
@@ -168,49 +419,83 @@ body {
 
 .message.user {
   flex-direction: row-reverse;
+  background: transparent;
+}
+
+.message.assistant {
+  background: transparent;
 }
 
 .message-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  border-radius: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   flex-shrink: 0;
+  margin: 0 16px;
 }
 
 .message.user .message-avatar {
   background: var(--message-user-bg);
-  color: var(--message-user-text);
+  color: white;
+  display: none;
 }
 
 .message.assistant .message-avatar {
-  background: var(--message-assistant-bg);
-  color: var(--message-assistant-text);
-  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  font-size: 20px;
 }
 
 .message-content {
-  max-width: 75%;
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
+  max-width: 768px;
+  padding: 0;
+  border-radius: 0;
   word-wrap: break-word;
+  line-height: 1.75;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.message-content p {
+  margin: 0 0 16px 0;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.message-content li {
+  margin: 8px 0;
 }
 
 .message.user .message-content {
-  background: var(--message-user-bg);
-  color: var(--message-user-text);
-  border-bottom-right-radius: 4px;
+  background: transparent;
+  color: var(--text-primary);
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  margin-left: auto;
+  text-align: right;
 }
 
 .message.assistant .message-content {
-  background: var(--message-assistant-bg);
-  color: var(--message-assistant-text);
-  border: 1px solid var(--border-color);
-  border-bottom-left-radius: 4px;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 /* Markdown styling */
@@ -295,59 +580,99 @@ body {
 }
 
 .chat-input-container {
-  padding: 16px 20px;
+  padding: 24px;
   border-top: 1px solid var(--border-color);
   background: var(--bg-primary);
+  max-width: 768px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.chat-input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .chat-input-wrapper {
   display: flex;
-  gap: 8px;
+  gap: 0;
   align-items: flex-end;
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  background: var(--bg-primary);
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.chat-input-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+[data-theme="dark"] .chat-input-wrapper {
+  background: var(--bg-secondary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+[data-theme="dark"] .chat-input-wrapper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .chat-input {
   flex: 1;
-  padding: 12px 16px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-secondary);
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 16px;
   resize: none;
-  min-height: 44px;
+  min-height: 24px;
   max-height: 200px;
   font-family: inherit;
+  transition: none;
+  outline: none;
 }
 
 .chat-input:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .send-button {
-  padding: 12px 24px;
-  background: var(--accent);
-  color: white;
+  padding: 8px;
+  background: transparent;
+  color: var(--accent);
   border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 500;
+  border-radius: 50%;
+  font-weight: 400;
+  font-size: 20px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  flex-shrink: 0;
 }
 
 .send-button:hover:not(:disabled) {
-  background: var(--accent-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  background: rgba(16, 163, 127, 0.1);
+  color: var(--accent);
+  transform: none;
+  box-shadow: none;
 }
 
 .send-button:disabled {
-  opacity: 0.5;
+  opacity: 0.3;
   cursor: not-allowed;
 }
 
@@ -493,19 +818,44 @@ body {
       <button id="btnDeleteChat" class="btn btn-outline-danger btn-sm">Удалить</button>
     </div>
   </div>
-  <!-- Chat Panel -->
-  <div class="chat-panel">
+  <div class="main-column">
+    <div class="analytics-panel empty" id="autoAnalyticsPanel">
+      <div class="analytics-header">
+        <div>
+          <h3>📊 Автоаналитика</h3>
+          <p class="analytics-subtitle" id="autoAnalyticsSummary">Загрузите CSV или Excel, чтобы увидеть готовые графики.</p>
+        </div>
+        <div class="analytics-actions">
+          <button id="btnCustomChart" class="btn btn-outline-primary btn-sm" disabled>Добавить график</button>
+        </div>
+      </div>
+      <div id="autoAnalyticsWarnings" class="analytics-warnings hidden"></div>
+      <div class="analytics-content">
+        <div class="analytics-left">
+          <div id="autoChartsPrimary" class="analytics-grid"></div>
+          <div id="autoChartsSecondary" class="analytics-grid secondary"></div>
+        </div>
+        <div class="analytics-detail" id="autoChartDetail">
+          <div class="analytics-placeholder">
+            <h4>Нет данных для отображения</h4>
+            <p>Загрузите финансовый файл, и я автоматически подберу подходящие визуализации.</p>
+          </div>
+        </div>
+      </div>
+      <div class="analytics-empty-state">
+        <strong>Готовые графики появятся после первой загрузки файла.</strong><br>
+        Поддерживаются колонки: дата, сумма, категория, счёт, контрагент.
+      </div>
+    </div>
+    <!-- Chat Panel -->
+    <div class="chat-panel">
     <div class="chat-header">
       <h2>💬 AI Финансовый Аналитик</h2>
-      <div class="d-flex gap-2">
-        <button id="btnUpload" class="btn btn-sm btn-outline-primary">Загрузить файл</button>
-        <button id="clearChat" class="btn btn-sm btn-outline-secondary">Очистить</button>
-      </div>
     </div>
     
     <div class="chat-messages" id="chatMessages">
       <div class="message assistant">
-        <div class="message-avatar">AI</div>
+        <div class="message-avatar">🤖</div>
         <div class="message-content">
           <p>Привет! Я ваш AI финансовый аналитик. Я могу помочь вам:</p>
           <ul>
@@ -520,22 +870,30 @@ body {
     </div>
     
     <div class="chat-input-container">
+      <div class="chat-input-actions">
+        <button id="fileUploadBtn" class="btn btn-sm btn-link" style="padding: 4px 8px; color: var(--text-secondary); border: none; text-decoration: none;" title="Загрузить файл">
+          <i class="bi bi-paperclip" style="font-size: 18px;"></i>
+        </button>
+        <button id="clearChat" class="btn btn-sm btn-link" style="padding: 4px 8px; color: var(--text-secondary); border: none; text-decoration: none;" title="Очистить чат">
+          <i class="bi bi-x-circle" style="font-size: 18px;"></i>
+        </button>
+      </div>
       <div class="chat-input-wrapper">
         <textarea 
           id="chatInput" 
           class="chat-input" 
-          placeholder="Задайте вопрос о ваших финансах..."
+          placeholder="Сообщение ChatGPT..."
           rows="1"
         ></textarea>
-        <button id="sendButton" class="send-button">
-          <span>Отправить</span>
-          <i class="bi bi-send"></i>
+        <button id="sendButton" class="send-button" title="Отправить">
+          <i class="bi bi-send-fill"></i>
         </button>
       </div>
+      <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.pdf,.docx" style="display: none;" />
+    </div>
     </div>
   </div>
-  
-  
+
 </div>
 
 <!-- Upload Modal -->
@@ -557,18 +915,69 @@ body {
   </div>
 </div>
 
+<div class="modal fade" id="customChartModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Добавить график</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label">Тип графика</label>
+          <select id="customChartType" class="form-select">
+            <option value="bar">Гистограмма</option>
+            <option value="horizontalBar">Горизонтальная гистограмма</option>
+            <option value="pie">Круговая диаграмма</option>
+            <option value="line">Линейный график</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Измерение</label>
+          <select id="customChartDimension" class="form-select"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Метрика</label>
+          <select id="customChartMetric" class="form-select"></select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Агрегация</label>
+          <select id="customChartAggregation" class="form-select">
+            <option value="sum">Сумма</option>
+            <option value="avg">Среднее</option>
+            <option value="count">Количество</option>
+          </select>
+        </div>
+        <div id="customChartError" class="text-danger small"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+        <button type="button" id="customChartSave" class="btn btn-primary">Построить</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ============================================================================
 // AI WORKSPACE JAVASCRIPT
 // ============================================================================
 
 let sessionId = localStorage.getItem('chatSessionId') || null;
-let charts = {};
+let autoChartState = {
+  lastPayload: null,
+  instances: {},
+  activeChartId: null,
+  fileId: null,
+  anomalies: [],
+  modal: null,
+};
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   initChat();
   initUploadModal();
+  initAutoAnalytics();
   loadUserSettings();
   loadChatSessions();
   wireSidebarControls();
@@ -620,6 +1029,572 @@ function renderChatList(filter = '') {
     item.appendChild(title); item.appendChild(meta); item.appendChild(preview);
     list.appendChild(item);
   });
+}
+
+// ==========================
+// Auto analytics dashboard
+// ==========================
+function initAutoAnalytics() {
+  const panel = document.getElementById('autoAnalyticsPanel');
+  if (!panel) {
+    return;
+  }
+  clearAutoCharts();
+  const customBtn = document.getElementById('btnCustomChart');
+  if (customBtn) {
+    customBtn.addEventListener('click', openCustomChartModal);
+  }
+  const saveBtn = document.getElementById('customChartSave');
+  if (saveBtn) {
+    saveBtn.addEventListener('click', submitCustomChart);
+  }
+  const modalEl = document.getElementById('customChartModal');
+  if (modalEl) {
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      autoChartState.modal = null;
+      const errorEl = document.getElementById('customChartError');
+      if (errorEl) {
+        errorEl.textContent = '';
+      }
+    });
+  }
+}
+
+function destroyAutoCharts() {
+  Object.values(autoChartState.instances || {}).forEach(instance => {
+    if (instance && typeof instance.destroy === 'function') {
+      instance.destroy();
+    }
+  });
+  autoChartState.instances = {};
+}
+
+function clearAutoCharts() {
+  destroyAutoCharts();
+  autoChartState.lastPayload = null;
+  autoChartState.activeChartId = null;
+  autoChartState.fileId = null;
+  autoChartState.anomalies = [];
+  renderAutoCharts(null, null);
+}
+
+function renderAutoCharts(payload, fileId) {
+  const panel = document.getElementById('autoAnalyticsPanel');
+  const summaryEl = document.getElementById('autoAnalyticsSummary');
+  const warningsEl = document.getElementById('autoAnalyticsWarnings');
+  const primaryContainer = document.getElementById('autoChartsPrimary');
+  const secondaryContainer = document.getElementById('autoChartsSecondary');
+  const detailEl = document.getElementById('autoChartDetail');
+  const customBtn = document.getElementById('btnCustomChart');
+
+  destroyAutoCharts();
+  autoChartState.lastPayload = payload;
+  autoChartState.fileId = fileId || null;
+  autoChartState.activeChartId = null;
+  if (payload && Array.isArray(payload.anomaly_alerts)) {
+    autoChartState.anomalies = payload.anomaly_alerts;
+  }
+
+  if (!panel || !summaryEl || !warningsEl || !primaryContainer || !secondaryContainer || !detailEl) {
+    return;
+  }
+
+  if (customBtn) {
+    customBtn.disabled = !fileId;
+  }
+
+  primaryContainer.innerHTML = '';
+  secondaryContainer.innerHTML = '';
+  warningsEl.innerHTML = '';
+  detailEl.innerHTML = '<div class="analytics-placeholder"><h4>Нет данных</h4><p>Загрузите финансовый файл, чтобы увидеть графики.</p></div>';
+
+  if (!payload || !payload.ok) {
+    panel.classList.add('empty');
+    const message = payload && payload.error ? payload.error : 'Загрузите CSV или Excel для автоаналитики.';
+    summaryEl.textContent = message;
+    warningsEl.classList.add('hidden');
+    detailEl.innerHTML = `<div class="analytics-placeholder"><h4>Нет данных</h4><p>${escapeHtml(message)}</p></div>`;
+    return;
+  }
+
+  panel.classList.remove('empty');
+
+  const headline = payload.insights && payload.insights.headline ? payload.insights.headline : 'Готовые графики построены автоматически.';
+  const rowCount = typeof payload.row_count === 'number' ? formatNumber(payload.row_count) : null;
+  summaryEl.textContent = rowCount ? `${headline} · ${rowCount} транзакций` : headline;
+
+  const warnings = Array.isArray(payload.warnings) ? payload.warnings : [];
+  if (warnings.length) {
+    warningsEl.classList.remove('hidden');
+    warnings.slice(0, 4).forEach(item => {
+      const pill = document.createElement('div');
+      pill.className = 'analytics-warning-pill';
+      pill.textContent = item;
+      warningsEl.appendChild(pill);
+    });
+  } else {
+    warningsEl.classList.add('hidden');
+  }
+
+  const chartsList = Array.isArray(payload.charts) ? payload.charts : [];
+  if (!chartsList.length) {
+    detailEl.innerHTML = '<div class="analytics-placeholder"><h4>Недостаточно данных</h4><p>Добавьте больше транзакций, чтобы построить графики.</p></div>';
+    return;
+  }
+
+  const primaryIds = new Set(payload.primary_chart_ids || []);
+  const primaryCharts = [];
+  const secondaryCharts = [];
+
+  chartsList.forEach(chart => {
+    if (primaryIds.has(chart.id) && primaryCharts.length < 3) {
+      primaryCharts.push(chart);
+    } else {
+      secondaryCharts.push(chart);
+    }
+  });
+
+  if (!primaryCharts.length && chartsList.length) {
+    primaryCharts.push(chartsList[0]);
+    secondaryCharts.shift();
+  }
+
+  primaryCharts.forEach(chart => renderAnalyticsCard(chart, primaryContainer));
+  secondaryCharts.forEach(chart => renderAnalyticsCard(chart, secondaryContainer));
+
+  const initialChart = primaryCharts[0] || chartsList[0];
+  if (initialChart) {
+    activateChart(initialChart.id);
+  }
+}
+
+function renderAnalyticsCard(chart, container) {
+  if (!chart || !container) {
+    return;
+  }
+  const card = document.createElement('div');
+  card.className = 'analytics-card';
+  card.dataset.chartId = chart.id;
+
+  const title = document.createElement('h4');
+  title.textContent = chart.title || 'График';
+  card.appendChild(title);
+
+  const canvas = document.createElement('canvas');
+  card.appendChild(canvas);
+
+  const metaInfo = describeChartMeta(chart);
+  if (metaInfo) {
+    const metaEl = document.createElement('div');
+    metaEl.className = 'chart-meta';
+    metaEl.textContent = metaInfo;
+    card.appendChild(metaEl);
+  }
+
+  card.addEventListener('click', () => activateChart(chart.id));
+  container.appendChild(card);
+
+  try {
+    const ctx = canvas.getContext('2d');
+    const config = {
+      type: chart.type || 'bar',
+      data: chart.chartjs && chart.chartjs.data ? chart.chartjs.data : {},
+      options: chart.chartjs && chart.chartjs.options ? chart.chartjs.options : {},
+    };
+    autoChartState.instances[chart.id] = new Chart(ctx, config);
+  } catch (error) {
+    console.error('Chart rendering error', error);
+    const fallback = document.createElement('div');
+    fallback.className = 'analytics-placeholder';
+    fallback.innerHTML = '<p>Не удалось отобразить график.</p>';
+    canvas.replaceWith(fallback);
+  }
+}
+
+function describeChartMeta(chart) {
+  const meta = chart && chart.meta ? chart.meta : {};
+  const parts = [];
+  if (meta.frequency) {
+    parts.push(formatMetaValue('frequency', meta.frequency));
+  }
+  if (meta.records) {
+    parts.push(`${formatNumber(meta.records)} записей`);
+  }
+  if (meta.aggregation) {
+    parts.push(`Агрегация: ${formatMetaValue('aggregation', meta.aggregation)}`);
+  }
+  if (meta.source) {
+    parts.push(`Источник: ${formatMetaValue('source', meta.source)}`);
+  }
+  if (meta.anomalies) {
+    parts.push(`${formatNumber(meta.anomalies)} аномалий`);
+  }
+  return parts.join(' · ');
+}
+
+function activateChart(chartId) {
+  if (!autoChartState.lastPayload || !chartId) {
+    return;
+  }
+  autoChartState.activeChartId = chartId;
+  document.querySelectorAll('.analytics-card').forEach(card => {
+    card.classList.toggle('active', card.dataset.chartId === chartId);
+  });
+  const chartsList = autoChartState.lastPayload.charts || [];
+  const chart = chartsList.find(item => item.id === chartId);
+  renderChartDetail(chart);
+}
+
+function renderChartDetail(chart) {
+  const detailEl = document.getElementById('autoChartDetail');
+  if (!detailEl) {
+    return;
+  }
+  if (!chart) {
+    detailEl.innerHTML = '<div class="analytics-placeholder"><h4>Нет данных</h4><p>Выберите график слева, чтобы увидеть детали.</p></div>';
+    return;
+  }
+
+  const insight = chart.insight ? `<p>${escapeHtml(chart.insight)}</p>` : '';
+  const meta = chart.meta || {};
+  const metaEntries = Object.entries(meta).filter(([key, value]) => value !== undefined && value !== null && value !== '');
+  let metaHtml = '';
+  if (metaEntries.length) {
+    metaHtml = '<ul class="detail-meta">' + metaEntries.map(([key, value]) => {
+      return `<li><span>${escapeHtml(translateMetaKey(key))}:</span>${escapeHtml(formatMetaValue(key, value))}</li>`;
+    }).join('') + '</ul>';
+  }
+
+  let alertsHtml = '';
+  if (chart.id === 'scatter_anomalies' && autoChartState.anomalies && autoChartState.anomalies.length) {
+    const items = autoChartState.anomalies.slice(0, 5).map(alert => {
+      const message = alert && alert.message ? alert.message : alert;
+      return `<li>${escapeHtml(message)}</li>`;
+    }).join('');
+    alertsHtml = `<div class="analytics-alerts"><strong>Важные события:</strong><ul>${items}</ul></div>`;
+  }
+
+  const tableHtml = buildDetailTable(chart);
+  detailEl.innerHTML = `
+    <div class="detail-header">
+      <h4>${escapeHtml(chart.title || 'График')}</h4>
+    </div>
+    ${insight}
+    ${metaHtml}
+    ${alertsHtml}
+    ${tableHtml || '<div class="analytics-placeholder"><p>Выберите точку на графике, чтобы увидеть подробности.</p></div>'}
+  `;
+}
+
+function buildDetailTable(chart) {
+  if (!chart || !chart.chartjs || !chart.chartjs.data) {
+    return '';
+  }
+  const { data } = chart.chartjs;
+  const type = chart.type || 'bar';
+
+  if (type === 'scatter' && data.datasets && data.datasets[0] && Array.isArray(data.datasets[0].data)) {
+    const dataset = data.datasets[0];
+    const rows = [...dataset.data].sort((a, b) => Math.abs((b && b.y) || 0) - Math.abs((a && a.y) || 0)).slice(0, 15);
+    if (!rows.length) {
+      return '';
+    }
+    let html = '<table><thead><tr><th>Дата</th><th>Сумма</th><th>Категория</th><th>Контрагент</th></tr></thead><tbody>';
+    rows.forEach(item => {
+      html += `<tr>
+        <td>${escapeHtml((item && item.x ? item.x : '—').toString())}</td>
+        <td>${formatCurrency(item && typeof item.y === 'number' ? item.y : 0)}</td>
+        <td>${escapeHtml((item && item.category ? item.category : '—').toString())}</td>
+        <td>${escapeHtml((item && item.person ? item.person : '—').toString())}</td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    return html;
+  }
+
+  const labels = Array.isArray(data.labels) ? data.labels : [];
+  const datasets = Array.isArray(data.datasets) ? data.datasets : [];
+  if (!labels.length || !datasets.length) {
+    return '';
+  }
+
+  const maxRows = Math.min(labels.length, 12);
+  const headerCells = ['Показатель'].concat(datasets.map(ds => escapeHtml(ds.label || 'Значение')));
+  let html = '<table><thead><tr>' + headerCells.map(label => `<th>${label}</th>`).join('') + '</tr></thead><tbody>';
+
+  for (let i = 0; i < maxRows; i += 1) {
+    const label = labels[i];
+    const rowCells = [`<td>${escapeHtml(label != null ? label.toString() : '—')}</td>`];
+    datasets.forEach(ds => {
+      const dsData = Array.isArray(ds.data) ? ds.data : [];
+      const value = dsData[i];
+      if (typeof value === 'number') {
+        const useCurrency = /доход|расход|сумм|баланс|profit|expense|income/i.test(ds.label || '');
+        rowCells.push(`<td>${useCurrency ? formatCurrency(value) : formatNumber(value)}</td>`);
+      } else if (value != null) {
+        rowCells.push(`<td>${escapeHtml(value.toString())}</td>`);
+      } else {
+        rowCells.push('<td>—</td>');
+      }
+    });
+    html += `<tr>${rowCells.join('')}</tr>`;
+  }
+
+  html += '</tbody></table>';
+  return html;
+}
+
+function formatAutoInsightsMessage(payload, anomalyAlerts = []) {
+  if (!payload) {
+    return '';
+  }
+  const parts = [];
+  parts.push('**Готово!** Автоматический дашборд построен.');
+  if (payload.insights && payload.insights.headline) {
+    parts.push(payload.insights.headline);
+  }
+  if (payload.insights && Array.isArray(payload.insights.highlights) && payload.insights.highlights.length) {
+    const highlights = payload.insights.highlights.slice(0, 3).map(item => `- ${item}`);
+    parts.push(highlights.join('\n'));
+  }
+  if (anomalyAlerts && anomalyAlerts.length && anomalyAlerts[0]) {
+    const alertMessage = anomalyAlerts[0].message || anomalyAlerts[0];
+    parts.push(`🚩 ${alertMessage}`);
+  }
+  if (payload.warnings && payload.warnings.length) {
+    parts.push(`⚠️ ${payload.warnings[0]}`);
+  }
+  return parts.join('\n\n');
+}
+
+function openCustomChartModal() {
+  if (!autoChartState.lastPayload || !autoChartState.lastPayload.ok) {
+    alert('Сначала загрузите финансовый файл.');
+    return;
+  }
+  populateCustomChartModal(autoChartState.lastPayload);
+  const modalEl = document.getElementById('customChartModal');
+  if (!modalEl) {
+    return;
+  }
+  autoChartState.modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  autoChartState.modal.show();
+}
+
+function populateCustomChartModal(payload) {
+  const dimensionSelect = document.getElementById('customChartDimension');
+  const metricSelect = document.getElementById('customChartMetric');
+  const aggregationSelect = document.getElementById('customChartAggregation');
+  const errorEl = document.getElementById('customChartError');
+  const saveBtn = document.getElementById('customChartSave');
+
+  if (!dimensionSelect || !metricSelect || !aggregationSelect) {
+    return;
+  }
+
+  const schema = payload ? payload.schema : null;
+  const dimensionOptions = getDimensionOptions(schema);
+  const metricOptions = getMetricOptions(schema);
+
+  dimensionSelect.innerHTML = '';
+  metricSelect.innerHTML = '';
+
+  dimensionOptions.forEach(opt => {
+    const option = document.createElement('option');
+    option.value = opt.value;
+    option.textContent = opt.label;
+    dimensionSelect.appendChild(option);
+  });
+
+  metricOptions.forEach(opt => {
+    const option = document.createElement('option');
+    option.value = opt.value;
+    option.textContent = opt.label;
+    metricSelect.appendChild(option);
+  });
+
+  if (dimensionOptions.length) {
+    dimensionSelect.value = dimensionOptions[0].value;
+  }
+  if (metricOptions.length) {
+    metricSelect.value = metricOptions[0].value;
+  }
+  aggregationSelect.value = 'sum';
+
+  if (errorEl) {
+    errorEl.textContent = '';
+  }
+  if (saveBtn) {
+    saveBtn.disabled = !(dimensionOptions.length && metricOptions.length);
+  }
+  if ((!dimensionOptions.length || !metricOptions.length) && errorEl) {
+    errorEl.textContent = 'Недостаточно данных для построения графика. Проверьте, что есть категориальные и числовые столбцы.';
+  }
+}
+
+function getDimensionOptions(schema) {
+  const options = [];
+  const push = (value, label) => {
+    if (!value) return;
+    if (options.some(opt => opt.value === value)) return;
+    options.push({ value, label });
+  };
+  if (!schema) {
+    return options;
+  }
+  const roles = schema.detected_roles || {};
+  if ((roles.category || []).length) push('__category__', 'Категория');
+  if ((roles.person || []).length) push('__person__', 'Контрагент');
+  if ((roles.account || []).length) push('__account__', 'Счёт');
+  if ((roles.tag || []).length) push('__tag__', 'Теги');
+  if ((roles.date || []).length) push('__date__', 'Дата');
+  (schema.categorical_columns || []).forEach(col => push(col, col));
+  (schema.text_columns || []).slice(0, 5).forEach(col => push(col, col));
+  return options;
+}
+
+function getMetricOptions(schema) {
+  const options = [];
+  const push = (value, label) => {
+    if (!value) return;
+    if (options.some(opt => opt.value === value)) return;
+    options.push({ value, label });
+  };
+  if (!schema) {
+    return options;
+  }
+  push('__expense__', 'Расходы');
+  push('__income__', 'Доходы');
+  push('__amount__', 'Баланс');
+  push('__balance__', 'Остаток');
+  (schema.numeric_columns || []).forEach(col => push(col, col));
+  return options;
+}
+
+async function submitCustomChart() {
+  const errorEl = document.getElementById('customChartError');
+  const saveBtn = document.getElementById('customChartSave');
+
+  if (!autoChartState.fileId) {
+    if (errorEl) {
+      errorEl.textContent = 'Файл с данными не найден. Перезагрузите страницу.';
+    }
+    return;
+  }
+
+  const payload = {
+    file_id: autoChartState.fileId,
+    chart_type: document.getElementById('customChartType')?.value || 'bar',
+    dimension: document.getElementById('customChartDimension')?.value,
+    metric: document.getElementById('customChartMetric')?.value,
+    aggregation: document.getElementById('customChartAggregation')?.value || 'sum',
+  };
+
+  if (!payload.dimension || !payload.metric) {
+    if (errorEl) {
+      errorEl.textContent = 'Выберите измерение и метрику.';
+    }
+    return;
+  }
+
+  if (errorEl) {
+    errorEl.textContent = '';
+  }
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Создание...';
+  }
+
+  try {
+    const csrftoken = getCookie('csrftoken');
+    const resp = await fetch('/api/auto-charts/custom/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!data.ok) {
+      throw new Error(data.error || 'Не удалось построить график');
+    }
+
+    const updatedPayload = autoChartState.lastPayload ? { ...autoChartState.lastPayload } : { ok: true, charts: [], primary_chart_ids: [] };
+    const chartsList = Array.isArray(updatedPayload.charts) ? [...updatedPayload.charts] : [];
+    chartsList.push(data.chart);
+    updatedPayload.charts = chartsList;
+    if (!updatedPayload.primary_chart_ids) {
+      updatedPayload.primary_chart_ids = [];
+    }
+
+    renderAutoCharts(updatedPayload, autoChartState.fileId);
+    activateChart(data.chart.id);
+
+    if (autoChartState.modal) {
+      autoChartState.modal.hide();
+    }
+  } catch (error) {
+    if (errorEl) {
+      errorEl.textContent = error.message;
+    }
+    console.error('Custom chart error', error);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Построить';
+    }
+  }
+}
+
+function escapeHtml(text) {
+  return String(text || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function translateMetaKey(key) {
+  const map = {
+    frequency: 'Период',
+    records: 'Записей',
+    anomalies: 'Аномалий',
+    aggregation: 'Агрегация',
+    source: 'Источник',
+  };
+  return map[key] || key;
+}
+
+function formatMetaValue(key, value) {
+  if (value === null || value === undefined) {
+    return '—';
+  }
+  if (key === 'frequency') {
+    const freqMap = { M: 'Месяц', W: 'Неделя', D: 'День', Q: 'Квартал' };
+    return freqMap[value] || value;
+  }
+  if (key === 'aggregation') {
+    const aggMap = { sum: 'Сумма', avg: 'Среднее', count: 'Количество' };
+    return aggMap[value] || value;
+  }
+  if (key === 'source') {
+    const sourceMap = { custom: 'Пользователь', auto: 'Авто', default: 'Система' };
+    return sourceMap[value] || value;
+  }
+  if (typeof value === 'number') {
+    return formatNumber(value);
+  }
+  return value.toString();
+}
+
+function formatNumber(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) {
+    return value != null ? value.toString() : '0';
+  }
+  return num.toLocaleString('ru-RU');
 }
 
 async function openChat(id) {
@@ -731,10 +1706,20 @@ function initChat() {
     }
   });
   const btnUpload = document.getElementById('btnUpload');
-  if (btnUpload) btnUpload.addEventListener('click', () => {
-    const modal = new bootstrap.Modal(document.getElementById('uploadModal'));
-    modal.show();
-  });
+  // File upload button (in input container)
+  const fileUploadBtn = document.getElementById('fileUploadBtn');
+  const fileInput = document.getElementById('fileInput');
+  if (fileUploadBtn && fileInput) {
+    fileUploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', async (e) => {
+      if (e.target.files && e.target.files[0]) {
+        await handleFile(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+  }
 }
 
 async function sendMessage() {
@@ -807,7 +1792,7 @@ function addMessage(role, content, isLoading = false) {
   
   const avatar = document.createElement('div');
   avatar.className = 'message-avatar';
-  avatar.textContent = role === 'user' ? 'Вы' : 'AI';
+  avatar.textContent = role === 'user' ? '' : '🤖';
   
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
@@ -873,15 +1858,30 @@ async function handleFile(file) {
     
     const data = await response.json();
     
-    if (data.ok) {
-      setTimeout(() => {
-        addMessage('assistant', 'Файл загружен. Анализирую данные...', true);
-        sendMessage();
-      }, 500);
+    if (!data.ok) {
+      addMessage('assistant', `Ошибка: ${data.error || 'Не удалось обработать файл.'}`);
+      return;
+    }
+
+    const chartsPayload = data.auto_charts || null;
+    const fileIdForCharts = chartsPayload && chartsPayload.ok && data.file ? data.file.id : null;
+    autoChartState.anomalies = data.anomaly_alerts || [];
+    renderAutoCharts(chartsPayload, fileIdForCharts);
+
+    if (chartsPayload && chartsPayload.ok) {
+      const summaryMessage = formatAutoInsightsMessage(chartsPayload, data.anomaly_alerts || []);
+      if (summaryMessage) {
+        addMessage('assistant', summaryMessage);
+      }
     } else {
-      addMessage('assistant', `Ошибка: ${data.error}`);
+      addMessage('assistant', 'Файл загружен. Не удалось автоматически построить графики — проверьте структуру колонок.');
+    }
+
+    if (data.ai_advice) {
+      addMessage('assistant', data.ai_advice);
     }
   } catch (error) {
+    console.error('File upload error', error);
     addMessage('assistant', `Ошибка: ${error.message}`);
   }
 }

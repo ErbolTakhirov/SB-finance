@@ -18,6 +18,13 @@ from core.utils.analytics import (
 
 
 # ============================================================================
+# Исключения уровня LLM
+# ============================================================================
+class LLMConfigurationError(Exception):
+    """Бросается, когда конфигурация LLM не завершена (например, отсутствует API ключ)."""
+
+
+# ============================================================================
 # КОНФИГУРАЦИЯ API LLM
 # ============================================================================
 # Вставьте ваш API ключ в settings.py или .env файл:
@@ -35,9 +42,12 @@ def _headers() -> Dict[str, str]:
         'Content-Type': 'application/json',
     }
     
-    # ВАЖНО: Вставьте ваш API ключ в settings.LLM_API_KEY
-    if settings.LLM_API_KEY:
-        headers['Authorization'] = f"Bearer {settings.LLM_API_KEY}"
+    api_key = (getattr(settings, 'LLM_API_KEY', '') or '').strip()
+    if not api_key:
+        raise LLMConfigurationError(
+            "API ключ LLM не настроен. Добавьте LLM_API_KEY в .env и перезапустите сервер."
+        )
+    headers['Authorization'] = f"Bearer {api_key}"
     
     # OpenRouter требует эти заголовки (опционально, но рекомендуются)
     # Referer: URL вашего сайта (для отслеживания использования API)
@@ -195,6 +205,8 @@ def get_ai_advice_from_data(data_blob: str, extra_instruction: str = "", anonymi
         if 'choices' not in data or not data['choices']:
             return "[AI ошибка] Неожиданный формат ответа от API."
         return data['choices'][0]['message']['content']
+    except LLMConfigurationError as ex:
+        return f"[AI ошибка] {ex}\n\nПроверьте файл .env и переменную LLM_API_KEY."
     except requests.exceptions.RequestException as ex:
         return f"[AI ошибка] Ошибка сети: {ex}"
     except Exception as ex:
@@ -338,6 +350,8 @@ def chat_with_context(
                     reply = data['choices'][0]['message']['content']
         
         return reply
+    except LLMConfigurationError as ex:
+        return f"[AI ошибка] {ex}\n\nУбедитесь, что переменная LLM_API_KEY задана и сервер перезапущен."
     except requests.exceptions.RequestException as ex:
         return f"[AI ошибка] Ошибка сети: {ex}\n\nПроверьте подключение к интернету и доступность API."
     except KeyError as ex:

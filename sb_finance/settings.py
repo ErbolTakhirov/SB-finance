@@ -2,9 +2,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Явно подгружаем .env из корня проекта, чтобы исключить зависимость от cwd
+load_dotenv(BASE_DIR / ".env")
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'dev-secret-key-change-me')
 DEBUG = os.getenv('DJANGO_DEBUG', '0') == '1'
@@ -106,7 +107,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Список всех моделей: https://openrouter.ai/models
 # ВАЖНО: Для экономии используйте модели с меньшим потреблением токенов!
 # ============================================================================
-LLM_API_KEY = os.getenv('LLM_API_KEY', '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')
+LLM_API_KEY = (os.getenv('LLM_API_KEY') or "").strip()
 LLM_API_URL = os.getenv('LLM_API_URL', 'https://openrouter.ai/api/v1/chat/completions')
 # Явно указываем правильную модель (переопределяет переменную окружения если она неправильная)
 LLM_MODEL = os.getenv('LLM_MODEL', 'openai/gpt-4o-mini')  # Стабильная и дешевая модель по умолчанию

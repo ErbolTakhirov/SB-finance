@@ -38,6 +38,7 @@ from .utils.file_ingest import (
     quick_text_amounts_summary,
     find_duplicates,
 )
+from .utils.auto_charts import build_auto_charts, build_custom_chart
 from .utils.export import export_chat_to_csv, export_chat_to_docx, export_chat_to_pdf
 from .llm import get_ai_advice_from_data, chat_with_context, _compute_content_hash
 from .utils.analytics import (
@@ -647,6 +648,7 @@ def upload_api(request):
     if not f:
         return JsonResponse({'ok': False, 'error': 'Файл не передан'}, status=400)
     name = (f.name or '').lower()
+    file_extension = name.split('.')[-1] if '.' in name else 'unknown'
     
     # Сохраняем содержимое файла в память для повторного использования
     file_content = None
@@ -665,15 +667,29 @@ def upload_api(request):
     
     try:
         summary = {}
+        auto_chart_payload = None
         imported = {"incomes": 0, "expenses": 0}
         import_stats = {}
+
+        chart_ext = file_extension.lower() if file_extension else ''
+        if chart_ext in ('csv', 'xlsx', 'xls'):
+            try:
+                auto_chart_payload = build_auto_charts(file_content, chart_ext)
+            except Exception as chart_exc:
+                import traceback
+                print(f"Ошибка автогенерации графиков: {chart_exc}")
+                print(traceback.format_exc())
+                auto_chart_payload = {
+                    'ok': False,
+                    'error': f'Ошибка автогенерации графиков: {chart_exc}'
+                }
         
         # Сначала создаем UploadedFile, чтобы иметь file_obj для source_file
         file_obj = UploadedFile.objects.create(
             user=request.user,
             file=file_for_db,
             original_name=f.name,
-            file_type=name.split('.')[-1] if '.' in name else 'unknown',
+            file_type=chart_ext or 'unknown',
             file_size=file_size or len(file_content),
             processed=False,  # Будет установлено в True после успешной обработки
             metadata={},
@@ -720,7 +736,19 @@ def upload_api(request):
             return JsonResponse({'ok': False, 'error': 'Поддерживаются файлы CSV, Excel (.xlsx, .xls), DOCX, PDF'}, status=400)
 
         # Обновляем метаданные файла
-        file_obj.metadata = {"imported": imported, "summary": summary, "import_stats": import_stats}
+        metadata_payload = {
+            "imported": imported,
+            "summary": summary,
+            "import_stats": import_stats,
+        }
+        if auto_chart_payload and auto_chart_payload.get('ok'):
+            metadata_payload["auto_charts"] = {
+                "row_count": auto_chart_payload.get('row_count'),
+                "warnings": auto_chart_payload.get('warnings'),
+                "primary_chart_ids": auto_chart_payload.get('primary_chart_ids'),
+                "insights": auto_chart_payload.get('insights'),
+            }
+        file_obj.metadata = metadata_payload
         file_obj.processed = True
         file_obj.save()
 
@@ -779,6 +807,8 @@ def upload_api(request):
                     sess = ChatSession.objects.get(session_id=attached_session_id, user=request.user)
                     analytics = dict(sess.analytics_summaries or {})
                     analytics['monthly_summary'] = memory
+                    if auto_chart_payload:
+                        analytics['auto_charts'] = auto_chart_payload
                     analytics['last_update'] = timezone.now().isoformat()
                     sess.analytics_summaries = analytics
                     sess.save()
@@ -818,6 +848,7 @@ def upload_api(request):
             },
             'ai_advice': ai_text,
             'anomaly_alerts': anomaly_alerts[:5] if anomaly_alerts else [],  # Топ-5 аномалий
+            'auto_charts': auto_chart_payload,
             'file': {
                 'id': file_obj.id,
                 'original_name': file_obj.original_name,
@@ -842,6 +873,79 @@ def upload_api(request):
         if settings.DEBUG:
             response_data['traceback'] = error_trace
         return JsonResponse(response_data, status=500)
+
+
+@login_required
+@require_http_methods(['POST'])
+def auto_chart_custom_api(request):
+    """Генерация пользовательского графика на основе ранее загруженного файла."""
+    try:
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except json.JSONDecodeError:
+        return JsonResponse({'ok': False, 'error': 'Неверный JSON'}, status=400)
+
+    file_id = payload.get('file_id')
+    chart_type = payload.get('chart_type') or 'bar'
+    dimension = payload.get('dimension')
+    metric = payload.get('metric')
+    aggregation = payload.get('aggregation') or 'sum'
+
+    if not file_id:
+        return JsonResponse({'ok': False, 'error': 'Не указан файл'}, status=400)
+    if not dimension or not metric:
+        return JsonResponse({'ok': False, 'error': 'Нужно выбрать измерение и метрику'}, status=400)
+
+    alias_map = {
+        'category': '__category__',
+        'person': '__person__',
+        'account': '__account__',
+        'date': '__date__',
+        'income': '__income__',
+        'expense': '__expense__',
+        'amount': '__amount__',
+        'balance': '__balance__',
+        'tag': '__tag__',
+    }
+    dimension_key = alias_map.get(dimension, dimension)
+    metric_key = alias_map.get(metric, metric)
+
+    try:
+        file_obj = UploadedFile.objects.get(id=int(file_id), user=request.user)
+    except (UploadedFile.DoesNotExist, ValueError, TypeError):
+        return JsonResponse({'ok': False, 'error': 'Файл не найден'}, status=404)
+
+    supported_ext = (file_obj.file_type or '').lower()
+    if supported_ext not in ('csv', 'xlsx', 'xls'):
+        return JsonResponse({'ok': False, 'error': 'Кастомные графики доступны только для CSV/Excel файлов'}, status=400)
+
+    file_bytes = b''
+    try:
+        file_obj.file.open('rb')
+        file_bytes = file_obj.file.read()
+    finally:
+        try:
+            file_obj.file.close()
+        except Exception:
+            pass
+
+    try:
+        chart_payload = build_custom_chart(
+            file_bytes,
+            supported_ext,
+            dimension=dimension_key,
+            metric=metric_key,
+            chart_type=chart_type,
+            aggregation=aggregation,
+        )
+    except ValueError as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+    except Exception as e:
+        import traceback
+        print(f"Ошибка custom chart: {e}")
+        print(traceback.format_exc())
+        return JsonResponse({'ok': False, 'error': f'Ошибка построения графика: {e}'}, status=500)
+
+    return JsonResponse({'ok': True, 'chart': chart_payload})
 
 
 @login_required

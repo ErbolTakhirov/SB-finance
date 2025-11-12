@@ -18,101 +18,38 @@
   </form>
 </div>
 
+<div id="processBanner" class="alert alert-info d-none fade-in" role="alert">
+  <div class="loader-inline">
+    <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+    <span id="processBannerText">Файл обрабатывается…</span>
+  </div>
+  <span class="ms-2 soft-badge" id="processSubstate" style="display:none;"></span>
+  <button type="button" class="btn-close float-end" aria-label="Close" onclick="document.getElementById('processBanner').classList.add('d-none')"></button>
+</div>
+
 <!-- KPI Cards -->
-<div class="row mb-4">
-  <div class="col-md-4 mb-3">
-    <div class="app-card p-4 h-100">
-      <div class="muted small mb-1">💰 Доходы</div>
-      <div class="h3 mb-0 text-success" id="kpi-income">{{ income_total|default:0 }}</div>
-      <div class="small text-muted mt-2" id="kpi-income-change"></div>
-    </div>
+<div class="kpi mb-5">
+  <div class="kpi-card income">
+    <div class="label">💰 Доходы</div>
+    <div class="value text-success" id="kpi-income">{{ income_total|default:0 }}</div>
+    <div class="small muted mt-2" id="kpi-income-change"></div>
   </div>
-  <div class="col-md-4 mb-3">
-    <div class="app-card p-4 h-100">
-      <div class="muted small mb-1">💸 Расходы</div>
-      <div class="h3 mb-0 text-danger" id="kpi-expense">{{ expense_total|default:0 }}</div>
-      <div class="small text-muted mt-2" id="kpi-expense-change"></div>
-    </div>
+  <div class="kpi-card expense">
+    <div class="label">💸 Расходы</div>
+    <div class="value text-danger" id="kpi-expense">{{ expense_total|default:0 }}</div>
+    <div class="small muted mt-2" id="kpi-expense-change"></div>
   </div>
-  <div class="col-md-4 mb-3">
-    <div class="app-card p-4 h-100 card-gradient">
-      <div class="muted small mb-1">📈 Прибыль</div>
-      <div class="h3 mb-0" id="kpi-profit">{{ profit|default:0 }}</div>
-      <div class="small text-muted mt-2" id="kpi-profit-change"></div>
-      <div id="ai-kpi" class="mt-2"></div>
-    </div>
+  <div class="kpi-card profit">
+    <div class="label">📈 Прибыль</div>
+    <div class="value text-primary" id="kpi-profit">{{ profit|default:0 }}</div>
+    <div class="small muted mt-2" id="kpi-profit-change"></div>
+    <div id="ai-kpi" class="mt-2"></div>
   </div>
 </div>
 
-<!-- Chart Controls -->
-<div class="app-card p-3 mb-3">
-  <div class="row align-items-center">
-    <div class="col-md-3">
-      <label class="form-label small">Группировка:</label>
-      <select class="form-select form-select-sm" id="groupBy">
-        <option value="day">По дням</option>
-        <option value="week">По неделям</option>
-        <option value="month">По месяцам</option>
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label small">Категория:</label>
-      <select class="form-select form-select-sm" id="categoryFilter">
-        <option value="">Все категории</option>
-      </select>
-    </div>
-    <div class="col-md-6 text-end">
-      <button class="btn btn-sm btn-outline-primary" onclick="exportChart('timeSeriesChart')">
-        <i class="bi bi-download"></i> PNG
-      </button>
-      <button class="btn btn-sm btn-outline-primary" onclick="exportDataCSV()">
-        <i class="bi bi-file-earmark-spreadsheet"></i> CSV
-      </button>
-      <button class="btn btn-sm btn-outline-secondary" onclick="toggleMovingAvg()">
-        <i class="bi bi-graph-up"></i> Moving Avg
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- Time Series Chart -->
-<div class="app-card p-4 mb-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h5 class="mb-0">📈 Динамика доходов и расходов</h5>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="showProfitFill" checked>
-      <label class="form-check-label small" for="showProfitFill">Показать профит (fill)</label>
-    </div>
-  </div>
-  <div id="timeSeriesChart" style="height: 400px;"></div>
-</div>
-
-<!-- Cumulative Chart -->
-<div class="app-card p-4 mb-3">
-  <h5 class="mb-3">📊 Кумулятивный рост</h5>
-  <div id="cumulativeChart" style="height: 300px;"></div>
-</div>
-
-<!-- Category Charts Row -->
-<div class="row mb-3">
-  <div class="col-md-6 mb-3">
-    <div class="app-card p-4 h-100">
-      <h5 class="mb-3">🥧 Расходы по категориям</h5>
-      <div id="expensePieChart" style="height: 350px;"></div>
-    </div>
-  </div>
-  <div class="col-md-6 mb-3">
-    <div class="app-card p-4 h-100">
-      <h5 class="mb-3">📊 Доходы по категориям</h5>
-      <div id="incomePieChart" style="height: 350px;"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Bar Chart by Category -->
-<div class="app-card p-4 mb-3">
-  <h5 class="mb-3">📊 Расходы по категориям (Bar)</h5>
-  <div id="expenseBarChart" style="height: 350px;"></div>
+<!-- Real Data Charts Container -->
+<div id="chartsContainer" class="mb-4">
+  <!-- Charts built from real DB data will be rendered here -->
 </div>
 
 <!-- AI Insights -->
@@ -132,18 +69,33 @@
 </div>
 
 <!-- Upload File -->
-<div class="app-card p-3 mb-3">
-  <div class="d-flex flex-wrap justify-content-between align-items-center">
-    <div class="app-section-title">Загрузка файла</div>
-    <div class="muted small">CSV · DOCX · PDF</div>
-  </div>
-  <form method="post" enctype="multipart/form-data" class="actions mt-2" id="uploadForm">{% csrf_token %}
-    <input class="form-control" style="max-width: 360px;" type="file" name="upload_file" accept=".csv,.pdf,.docx" required>
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" name="import_to_db" id="import_to_db" checked>
-      <label class="form-check-label" for="import_to_db">Импортировать данные из CSV в базу</label>
+<div class="app-card p-4 mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <div>
+      <div class="app-section-title mb-1">Загрузка файла</div>
+      <div class="muted small">CSV · DOCX · PDF</div>
     </div>
-    <button class="btn btn-success" type="submit"><i class="bi bi-upload"></i> Загрузить и проанализировать</button>
+  </div>
+  <form method="post" enctype="multipart/form-data" class="mt-3" id="uploadForm">{% csrf_token %}
+    <div class="d-flex flex-wrap gap-3 align-items-end mb-3">
+      <div style="flex: 1; min-width: 280px;">
+        <label class="form-label small fw-semibold mb-2">Выберите файл</label>
+        <input class="form-control" type="file" name="upload_file" accept=".csv,.pdf,.docx" required id="fileInput">
+      </div>
+      <div class="form-check d-flex align-items-center" style="min-height: 40px;">
+        <input class="form-check-input" type="checkbox" name="import_to_db" id="import_to_db" checked>
+        <label class="form-check-label ms-2" for="import_to_db">Импортировать данные из CSV в базу</label>
+      </div>
+      <button class="btn btn-success" type="submit" id="uploadBtn">
+        <i class="bi bi-upload"></i> Загрузить и проанализировать
+      </button>
+    </div>
+    <div id="uploadProgress" class="d-none">
+      <div class="progress" style="height: 8px;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="progressBar"></div>
+      </div>
+      <div class="mt-2 small muted" id="progressText">Подготовка к загрузке...</div>
+    </div>
   </form>
 </div>
 
@@ -161,36 +113,539 @@
   <ul id="feed" class="mb-0"></ul>
 </div>
 
-<!-- Plotly.js -->
-<script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
+<!-- Chart.js for real data charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-let chartData = null;
-let showMovingAvg = false;
-let charts = {};
+// Real data charts state
+let dashboardData = null;
+let renderedCharts = {};
+let hasData = false;
 
+// Color palette for charts
+const CHART_COLORS = {
+  income: '#34A853',
+  expense: '#FF6363',
+  profit: '#3B82F6',
+  balance: '#8B5CF6',
+  anomaly: '#7EE787',
+  category: ['#FF6363', '#3B82F6', '#34A853', '#F59E0B', '#8B5CF6', '#10B981', '#EF4444', '#06B6D4', '#6366F1', '#EC4899']
+};
+
+function themeVars() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const root = getComputedStyle(document.documentElement);
+  return {
+    text: root.getPropertyValue('--ink-900').trim() || (isDark ? '#ECECEC' : '#0f172a'),
+    grid: root.getPropertyValue('--grid-color').trim() || (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)'),
+    bg: root.getPropertyValue('--bg-elev').trim() || (isDark ? '#0D0D0D' : '#ffffff'),
+    border: root.getPropertyValue('--border').trim() || (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(15,23,42,0.08)'),
+    hoverBg: root.getPropertyValue('--bg-hover').trim() || (isDark ? '#1A1A1A' : '#F8F9FA'),
+  };
+}
+
+function setProcessing(on, text='Файл обрабатывается…', sub='') {
+  const banner = document.getElementById('processBanner');
+  const txt = document.getElementById('processBannerText');
+  const subEl = document.getElementById('processSubstate');
+  if (on) {
+    txt.textContent = text;
+    banner.classList.remove('d-none');
+    if (sub) {
+      subEl.textContent = sub;
+      subEl.style.display = '';
+    } else {
+      subEl.style.display = 'none';
+    }
+  } else {
+    banner.classList.add('d-none');
+  }
+}
+
+// Render charts from real DB data
+function renderChartsFromDB(data) {
+  if (!data || !data.ok) {
+    showEmptyState('Нет данных в базе');
+    return;
+  }
+  
+  dashboardData = data;
+  hasData = true;
+  const container = document.getElementById('chartsContainer');
+  container.innerHTML = '';
+  
+  // Destroy existing charts
+  Object.values(renderedCharts).forEach(chart => {
+    if (chart && typeof chart.destroy === 'function') chart.destroy();
+  });
+  renderedCharts = {};
+  
+  const daily = data.daily || {};
+  const categories = data.categories || {};
+  const hasDailyData = daily.dates && daily.dates.length > 0;
+  const hasCategoryData = (categories.expenses && categories.expenses.length > 0) || 
+                          (categories.incomes && categories.incomes.length > 0);
+  
+  if (!hasDailyData && !hasCategoryData) {
+    showEmptyState('Добавьте транзакции для визуализации');
+    return;
+  }
+  
+  // Render Time Series Chart (Primary - full width)
+  if (hasDailyData) {
+    const timeSeriesCard = createChartCardElement({
+      id: 'timeSeries',
+      title: 'Динамика доходов и расходов',
+      subtitle: 'Визуализация финансовых потоков по времени',
+      type: 'line',
+      size: 'primary'
+    });
+    container.appendChild(timeSeriesCard);
+    // Wait for DOM to render
+    setTimeout(() => renderTimeSeriesChart(daily, 'timeSeries'), 100);
+  }
+  
+  // Render Category Charts (Secondary - grid)
+  if (hasCategoryData) {
+    const categoryRow = document.createElement('div');
+    categoryRow.className = 'row g-4 mt-4';
+    
+    if (categories.expenses && categories.expenses.length > 0) {
+      const expenseCol = document.createElement('div');
+      expenseCol.className = 'col-md-6';
+      expenseCol.appendChild(createChartCardElement({
+        id: 'expenseCategories',
+        title: 'Расходы по категориям',
+        subtitle: 'Распределение расходов',
+        type: 'pie',
+        size: 'secondary'
+      }));
+      categoryRow.appendChild(expenseCol);
+      setTimeout(() => renderCategoryPieChart(categories.expenses, 'expenseCategories', 'expense'), 100);
+    }
+    
+    if (categories.incomes && categories.incomes.length > 0) {
+      const incomeCol = document.createElement('div');
+      incomeCol.className = 'col-md-6';
+      incomeCol.appendChild(createChartCardElement({
+        id: 'incomeCategories',
+        title: 'Доходы по категориям',
+        subtitle: 'Распределение доходов',
+        type: 'pie',
+        size: 'secondary'
+      }));
+      categoryRow.appendChild(incomeCol);
+      setTimeout(() => renderCategoryPieChart(categories.incomes, 'incomeCategories', 'income'), 100);
+    }
+    
+    if (categoryRow.children.length > 0) {
+      container.appendChild(categoryRow);
+    }
+  }
+  
+  // Render Cumulative Chart if we have daily data
+  if (hasDailyData && daily.cumulative_income && daily.cumulative_income.length > 0) {
+    const cumulativeCard = createChartCardElement({
+      id: 'cumulative',
+      title: 'Кумулятивный рост',
+      subtitle: 'Накопительная сумма доходов и прибыли',
+      type: 'line',
+      size: 'secondary'
+    });
+    const cumulativeRow = document.createElement('div');
+    cumulativeRow.className = 'row g-4 mt-4';
+    const cumulativeCol = document.createElement('div');
+    cumulativeCol.className = 'col-12';
+    cumulativeCol.appendChild(cumulativeCard);
+    cumulativeRow.appendChild(cumulativeCol);
+    container.appendChild(cumulativeRow);
+    setTimeout(() => renderCumulativeChart(daily, 'cumulative'), 100);
+  }
+}
+
+// Show empty state (only if truly no data)
+function showEmptyState(message) {
+  const container = document.getElementById('chartsContainer');
+  container.innerHTML = `
+    <div class="app-card p-5 text-center">
+      <div class="mb-4">
+        <i class="bi bi-graph-up" style="font-size: 4rem; color: var(--ink-300);"></i>
+      </div>
+      <h4 class="mb-2" style="color: var(--ink-700);">${message}</h4>
+      <p class="muted">Добавьте транзакции через загрузку файла или вручную, чтобы увидеть графики.</p>
+    </div>
+  `;
+  hasData = false;
+}
+
+// Create chart card element (clean ChatGPT/Stripe style)
+function createChartCardElement({id, title, subtitle, type, size = 'secondary'}) {
+  const card = document.createElement('div');
+  card.className = 'app-card position-relative';
+  card.setAttribute('data-chart-id', id);
+  
+  const isPrimary = size === 'primary';
+  const chartHeight = isPrimary ? '450px' : '380px';
+  
+  const icons = {
+    'line': 'bi-graph-up-arrow',
+    'area': 'bi-graph-up',
+    'bar': 'bi-bar-chart',
+    'pie': 'bi-pie-chart',
+    'scatter': 'bi-scatter'
+  };
+  const icon = icons[type] || 'bi-graph-up';
+  
+  card.innerHTML = `
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div style="flex: 1;">
+        <h4 class="mb-1" style="font-weight: 700; font-size: ${isPrimary ? '1.5rem' : '1.25rem'}; letter-spacing: -0.01em; color: var(--ink-900);">
+          <i class="bi ${icon}" style="color: var(--brand); margin-right: 10px;"></i>
+          ${title}
+        </h4>
+        ${subtitle ? `<p class="muted small mb-0 mt-1">${subtitle}</p>` : ''}
+      </div>
+      <div class="chart-export-buttons" style="opacity: 0; transition: opacity 0.2s;">
+        <button class="btn btn-sm btn-outline-secondary" onclick="exportChartPNG('${id}')" title="Экспорт PNG">
+          <i class="bi bi-download"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="exportChartCSV('${id}')" title="Экспорт CSV">
+          <i class="bi bi-file-earmark-spreadsheet"></i>
+        </button>
+      </div>
+    </div>
+    <div class="chart-container" style="position: relative; height: ${chartHeight};">
+      <canvas id="${id}"></canvas>
+    </div>
+  `;
+  
+  // Show export buttons on hover
+  card.addEventListener('mouseenter', () => {
+    const btn = card.querySelector('.chart-export-buttons');
+    if (btn) btn.style.opacity = '1';
+  });
+  card.addEventListener('mouseleave', () => {
+    const btn = card.querySelector('.chart-export-buttons');
+    if (btn) btn.style.opacity = '0';
+  });
+  
+  return card;
+}
+
+// Render Time Series Chart from real DB data
+function renderTimeSeriesChart(daily, canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !daily.dates || daily.dates.length === 0) return;
+  
+  const tv = themeVars();
+  const dates = daily.dates.map(d => {
+    const date = new Date(d);
+    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+  });
+  
+  const datasets = [];
+  
+  if (daily.income && daily.income.some(v => Math.abs(v) > 0.01)) {
+    datasets.push({
+      label: 'Доходы',
+      data: daily.income,
+      borderColor: CHART_COLORS.income,
+      backgroundColor: CHART_COLORS.income + '20',
+      borderWidth: 3,
+      fill: false,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+    });
+  }
+  
+  if (daily.expense && daily.expense.some(v => Math.abs(v) > 0.01)) {
+    datasets.push({
+      label: 'Расходы',
+      data: daily.expense,
+      borderColor: CHART_COLORS.expense,
+      backgroundColor: CHART_COLORS.expense + '20',
+      borderWidth: 3,
+      fill: false,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 6,
+    });
+  }
+  
+  if (daily.profit && daily.profit.some(v => Math.abs(v) > 0.01)) {
+    datasets.push({
+      label: 'Прибыль',
+      data: daily.profit,
+      borderColor: CHART_COLORS.profit,
+      backgroundColor: CHART_COLORS.profit + '15',
+      borderWidth: 2,
+      fill: true,
+      tension: 0.4,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+    });
+  }
+  
+  const chart = new Chart(canvas, {
+    type: 'line',
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: tv.text,
+            font: { size: 13, family: 'Inter, system-ui, sans-serif', weight: '500' },
+            padding: 15,
+            usePointStyle: true,
+          }
+        },
+        tooltip: {
+          backgroundColor: tv.bg,
+          titleColor: tv.text,
+          bodyColor: tv.text,
+          borderColor: tv.border,
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { size: 13, weight: '600' },
+          bodyFont: { size: 12 },
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.parsed.y.toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' руб.';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: tv.text, font: { size: 11 } },
+          grid: { color: tv.grid, drawBorder: false }
+        },
+        y: {
+          ticks: { 
+            color: tv.text, 
+            font: { size: 11 },
+            callback: function(value) {
+              return value.toLocaleString('ru-RU') + ' ₽';
+            }
+          },
+          grid: { color: tv.grid, drawBorder: false }
+        }
+      }
+    }
+  });
+  
+  renderedCharts['timeSeries'] = chart;
+}
+
+// Render Category Pie Chart from real DB data
+function renderCategoryPieChart(categoryData, canvasId, type) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !categoryData || categoryData.length === 0) return;
+  
+  const tv = themeVars();
+  const labels = categoryData.map(c => c.category || 'Без категории');
+  const values = categoryData.map(c => parseFloat(c.total) || 0);
+  
+  // Use appropriate colors
+  const baseColor = type === 'expense' ? CHART_COLORS.expense : CHART_COLORS.income;
+  const colors = CHART_COLORS.category.slice(0, labels.length);
+  
+  const chart = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: colors,
+        borderColor: tv.bg,
+        borderWidth: 2,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            color: tv.text,
+            font: { size: 12, family: 'Inter, system-ui, sans-serif' },
+            padding: 12,
+            usePointStyle: true,
+          }
+        },
+        tooltip: {
+          backgroundColor: tv.bg,
+          titleColor: tv.text,
+          bodyColor: tv.text,
+          borderColor: tv.border,
+          borderWidth: 1,
+          padding: 12,
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.parsed || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((value / total) * 100).toFixed(1);
+              return label + ': ' + value.toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' руб. (' + percentage + '%)';
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  renderedCharts[canvasId.replace('chart-', '')] = chart;
+}
+
+// Render Cumulative Chart from real DB data
+function renderCumulativeChart(daily, canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !daily.dates || daily.dates.length === 0) return;
+  
+  const tv = themeVars();
+  const dates = daily.dates.map(d => {
+    const date = new Date(d);
+    return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+  });
+  
+  const datasets = [];
+  
+  if (daily.cumulative_income && daily.cumulative_income.some(v => Math.abs(v) > 0.01)) {
+    datasets.push({
+      label: 'Кумулятивные доходы',
+      data: daily.cumulative_income,
+      borderColor: CHART_COLORS.income,
+      backgroundColor: CHART_COLORS.income + '25',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+    });
+  }
+  
+  if (daily.cumulative_profit && daily.cumulative_profit.some(v => Math.abs(v) > 0.01)) {
+    datasets.push({
+      label: 'Кумулятивная прибыль',
+      data: daily.cumulative_profit,
+      borderColor: CHART_COLORS.profit,
+      backgroundColor: CHART_COLORS.profit + '25',
+      borderWidth: 3,
+      fill: true,
+      tension: 0.4,
+    });
+  }
+  
+  if (datasets.length === 0) return;
+  
+  const chart = new Chart(canvas, {
+    type: 'line',
+    data: { labels: dates, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: tv.text,
+            font: { size: 13, family: 'Inter, system-ui, sans-serif', weight: '500' },
+            padding: 15,
+            usePointStyle: true,
+          }
+        },
+        tooltip: {
+          backgroundColor: tv.bg,
+          titleColor: tv.text,
+          bodyColor: tv.text,
+          borderColor: tv.border,
+          borderWidth: 1,
+          padding: 12,
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.parsed.y.toLocaleString('ru-RU', { minimumFractionDigits: 2 }) + ' руб.';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: tv.text, font: { size: 11 } },
+          grid: { color: tv.grid, drawBorder: false }
+        },
+        y: {
+          ticks: { 
+            color: tv.text, 
+            font: { size: 11 },
+            callback: function(value) {
+              return value.toLocaleString('ru-RU') + ' ₽';
+            }
+          },
+          grid: { color: tv.grid, drawBorder: false }
+        }
+      }
+    }
+  });
+  
+  renderedCharts['cumulative'] = chart;
+}
+
+// Export functions
+function exportChartPNG(chartId) {
+  const chart = renderedCharts[chartId];
+  if (!chart) return;
+  const url = chart.toBase64Image();
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `chart-${chartId}-${new Date().toISOString().split('T')[0]}.png`;
+  link.click();
+}
+
+function exportChartCSV(chartId) {
+  const chart = renderedCharts[chartId];
+  if (!chart || !chart.data) return;
+  
+  let csv = '';
+  if (chart.data.labels && chart.data.datasets) {
+    csv = 'Label,' + chart.data.datasets.map(d => d.label || 'Value').join(',') + '\n';
+    chart.data.labels.forEach((label, idx) => {
+      csv += label + ',' + chart.data.datasets.map(d => d.data[idx] || '').join(',') + '\n';
+    });
+  }
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `chart-${chartId}-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+}
+
+// Load real data from DB and render charts
 async function loadDashboardData() {
-  const params = new URLSearchParams();
-  const start = document.getElementById('dateStart')?.value;
-  const end = document.getElementById('dateEnd')?.value;
-  const groupBy = document.getElementById('groupBy')?.value || 'day';
-  const category = document.getElementById('categoryFilter')?.value || '';
-  
-  if (start) params.append('start', start);
-  if (end) params.append('end', end);
-  params.append('group_by', groupBy);
-  if (category) params.append('category', category);
-  
   try {
+    const params = new URLSearchParams();
+    const start = document.getElementById('dateStart')?.value;
+    const end = document.getElementById('dateEnd')?.value;
+    
+    if (start) params.append('start', start);
+    if (end) params.append('end', end);
+    
     const res = await fetch(`/api/dashboard/data/?${params.toString()}`);
     const data = await res.json();
     if (data.ok) {
-      chartData = data;
-      renderAllCharts();
-      updateCategories(data.categories);
       updateKPI(data);
+      renderChartsFromDB(data); // Render charts from real DB data
+    } else {
+      showEmptyState('Ошибка загрузки данных');
     }
   } catch (error) {
     console.error('Error loading dashboard data:', error);
+    showEmptyState('Ошибка подключения к серверу');
   }
 }
 
@@ -208,6 +663,14 @@ function updateKPI(data) {
   document.getElementById('kpi-income').textContent = totalIncome.toFixed(2);
   document.getElementById('kpi-expense').textContent = totalExpense.toFixed(2);
   document.getElementById('kpi-profit').textContent = totalProfit.toFixed(2);
+  document.getElementById('kpi-income').closest('.app-card')?.classList.add('pulse');
+  document.getElementById('kpi-expense').closest('.app-card')?.classList.add('pulse');
+  document.getElementById('kpi-profit').closest('.app-card')?.classList.add('pulse');
+  setTimeout(() => {
+    document.getElementById('kpi-income').closest('.app-card')?.classList.remove('pulse');
+    document.getElementById('kpi-expense').closest('.app-card')?.classList.remove('pulse');
+    document.getElementById('kpi-profit').closest('.app-card')?.classList.remove('pulse');
+  }, 1300);
   
   // Вычисляем динамику (сравнение последней недели с предыдущей)
   if (daily.income.length >= 14) {
@@ -241,6 +704,10 @@ function renderTimeSeriesChart() {
   
   const daily = chartData.daily;
   const dates = daily.dates.map(d => new Date(d));
+  const tv = themeVars();
+  const empty = !daily.income || daily.income.length === 0 || (daily.income.reduce((a,b)=>a+b,0) === 0 && daily.expense.reduce((a,b)=>a+b,0) === 0);
+  document.getElementById('timeSeriesEmpty').classList.toggle('d-none', !empty);
+  document.getElementById('timeSeriesChart').style.display = empty ? 'none' : 'block';
   
   // Обработка разрывов данных (пропущенные дни)
   // Для Plotly: если между датами больше 1 дня - добавляем null для разрыва линии
@@ -283,13 +750,13 @@ function renderTimeSeriesChart() {
       name: 'Доходы',
       type: 'scatter',
       mode: 'lines+markers',
-      line: { color: '#198754', width: 2.5, shape: 'linear' },
-      marker: { size: 7, color: '#198754' },
+      line: { color: '#34A853', width: 4, shape: 'spline', smoothing: 1.3 },
+      marker: { size: 8, color: '#34A853', line: { width: 2, color: '#ffffff' } },
       hovertemplate: incomeData.tooltips && incomeData.tooltips.length > 0 ? 
         '%{customdata}<extra></extra>' : 
         '<b>%{fullData.name}</b><br>Дата: %{x|%Y-%m-%d}<br>Сумма: %{y:,.2f} руб.<extra></extra>',
       customdata: incomeData.tooltips || [],
-      connectgaps: false, // НЕ соединяем пропуски
+      connectgaps: false,
     },
     {
       x: expenseData.x,
@@ -297,13 +764,13 @@ function renderTimeSeriesChart() {
       name: 'Расходы',
       type: 'scatter',
       mode: 'lines+markers',
-      line: { color: '#dc3545', width: 2.5, shape: 'linear' },
-      marker: { size: 7, color: '#dc3545' },
+      line: { color: '#FF6363', width: 4, shape: 'spline', smoothing: 1.3 },
+      marker: { size: 8, color: '#FF6363', line: { width: 2, color: '#ffffff' } },
       hovertemplate: expenseData.tooltips && expenseData.tooltips.length > 0 ? 
         '%{customdata}<extra></extra>' : 
         '<b>%{fullData.name}</b><br>Дата: %{x|%Y-%m-%d}<br>Сумма: %{y:,.2f} руб.<extra></extra>',
       customdata: expenseData.tooltips || [],
-      connectgaps: false, // НЕ соединяем пропуски
+      connectgaps: false,
     }
   ];
   
@@ -311,7 +778,7 @@ function renderTimeSeriesChart() {
   if (document.getElementById('showProfitFill')?.checked) {
     const profitData = processDataWithGaps(daily.profit, dates);
     
-    // Линия прибыли с заливкой до нуля (зеленая выше нуля, красная ниже)
+    // Линия прибыли с заливкой до нуля
     traces.push({
       x: profitData.x,
       y: profitData.y,
@@ -319,8 +786,8 @@ function renderTimeSeriesChart() {
       type: 'scatter',
       mode: 'lines',
       fill: 'tozeroy',
-      fillcolor: 'rgba(13, 110, 253, 0.15)',
-      line: { color: '#0d6efd', width: 2, dash: 'dot' },
+      fillcolor: 'rgba(37, 99, 235, 0.2)',
+      line: { color: '#3B82F6', width: 3, shape: 'spline', smoothing: 1.3 },
       hovertemplate: '<b>📊 Прибыль</b><br>Дата: %{x|%Y-%m-%d}<br>Прибыль: %{y:,.2f} руб.<extra></extra>',
       connectgaps: false,
     });
@@ -348,7 +815,7 @@ function renderTimeSeriesChart() {
         name: 'MA Доходы (7д)',
         type: 'scatter',
         mode: 'lines',
-        line: { color: '#198754', width: 2, dash: 'dash', opacity: 0.7 },
+        line: { color: '#34A853', width: 2.5, dash: 'dash', opacity: 0.6 },
         hovertemplate: '<b>MA Доходы (7д)</b><br>Дата: %{x|%Y-%m-%d}<br>Среднее: %{y:.2f}<extra></extra>',
       });
       
@@ -358,7 +825,7 @@ function renderTimeSeriesChart() {
         name: 'MA Расходы (7д)',
         type: 'scatter',
         mode: 'lines',
-        line: { color: '#dc3545', width: 2, dash: 'dash', opacity: 0.7 },
+        line: { color: '#FF6363', width: 2.5, dash: 'dash', opacity: 0.6 },
         hovertemplate: '<b>MA Расходы (7д)</b><br>Дата: %{x|%Y-%m-%d}<br>Среднее: %{y:.2f}<extra></extra>',
       });
     }
@@ -426,36 +893,48 @@ function renderTimeSeriesChart() {
   }
   
   const layout = {
-    title: { text: 'Динамика доходов и расходов по дням', font: { size: 18, color: '#1a1a1a' } },
+    title: { text: '', font: { size: 0 } },
     xaxis: { 
-      title: { text: 'Дата', font: { size: 14 } },
+      title: { text: 'Дата', font: { size: 13, color: tv.text } },
       type: 'date',
       showgrid: true,
-      gridcolor: 'rgba(0,0,0,0.08)',
+      gridcolor: tv.grid,
       zeroline: false,
       tickformat: '%d.%m.%Y',
+      tickfont: { size: 11, color: tv.text },
+      linecolor: tv.border || tv.grid,
     },
     yaxis: { 
-      title: { text: 'Сумма (руб.)', font: { size: 14 } },
+      title: { text: 'Сумма (руб.)', font: { size: 13, color: tv.text } },
       showgrid: true,
-      gridcolor: 'rgba(0,0,0,0.08)',
+      gridcolor: tv.grid,
       zeroline: true,
-      zerolinecolor: 'rgba(0,0,0,0.2)',
+      zerolinecolor: tv.zero,
+      zerolinewidth: 2,
       tickformat: ',.0f',
+      tickfont: { size: 11, color: tv.text },
+      linecolor: tv.border || tv.grid,
     },
     hovermode: 'x unified',
-    hoverlabel: { bgcolor: 'rgba(255,255,255,0.9)', font: { size: 12 } },
+    hoverlabel: { 
+      bgcolor: tv.hoverBg || 'rgba(255, 255, 255, 0.95)', 
+      font: { size: 13, color: tv.text },
+      bordercolor: tv.border || 'rgba(0,0,0,0.1)',
+      borderwidth: 1,
+    },
     legend: { 
       orientation: 'h', 
-      y: -0.25,
+      y: -0.15,
       x: 0.5,
       xanchor: 'center',
-      font: { size: 12 },
+      font: { size: 13, color: tv.legendText },
+      bgcolor: 'transparent',
+      bordercolor: 'transparent',
     },
-    margin: { l: 70, r: 30, t: 50, b: 80 },
-    plot_bgcolor: 'rgba(255,255,255,1)',
-    paper_bgcolor: 'rgba(255,255,255,1)',
-    font: { family: 'Arial, sans-serif', size: 12, color: '#1a1a1a' },
+    margin: { l: 80, r: 40, t: 20, b: 80 },
+    plot_bgcolor: 'transparent',
+    paper_bgcolor: 'transparent',
+    font: { family: 'Inter, system-ui, Arial, sans-serif', size: 12, color: tv.text },
   };
   
   const config = {
@@ -482,6 +961,10 @@ function renderCumulativeChart() {
   
   const daily = chartData.daily;
   const dates = daily.dates.map(d => new Date(d));
+  const tv = themeVars();
+  const empty = !daily.cumulative_income || daily.cumulative_income.length === 0;
+  document.getElementById('cumulativeEmpty').classList.toggle('d-none', !empty);
+  document.getElementById('cumulativeChart').style.display = empty ? 'none' : 'block';
   
   const traces = [
     {
@@ -491,8 +974,8 @@ function renderCumulativeChart() {
       type: 'scatter',
       mode: 'lines',
       fill: 'tozeroy',
-      line: { color: '#198754', width: 3 },
-      fillcolor: 'rgba(25, 135, 84, 0.25)',
+      line: { color: '#34A853', width: 4, shape: 'spline', smoothing: 1.3 },
+      fillcolor: 'rgba(52, 168, 83, 0.2)',
       hovertemplate: '<b>Кумулятивные доходы</b><br>Дата: %{x|%Y-%m-%d}<br>Сумма: %{y:,.2f} руб.<extra></extra>',
     },
     {
@@ -502,29 +985,29 @@ function renderCumulativeChart() {
       type: 'scatter',
       mode: 'lines',
       fill: 'tozeroy',
-      line: { color: '#0d6efd', width: 3 },
-      fillcolor: 'rgba(13, 110, 253, 0.2)',
+      line: { color: '#3B82F6', width: 4, shape: 'spline', smoothing: 1.3 },
+      fillcolor: 'rgba(59, 130, 246, 0.2)',
       hovertemplate: '<b>Кумулятивная прибыль</b><br>Дата: %{x|%Y-%m-%d}<br>Сумма: %{y:,.2f} руб.<extra></extra>',
     }
   ];
   
   const layout = {
-    title: { text: 'Кумулятивный рост доходов и прибыли', font: { size: 16, color: '#1a1a1a' } },
+    title: { text: 'Кумулятивный рост доходов и прибыли', font: { size: 16, color: tv.text } },
     xaxis: { 
       title: { text: 'Дата', font: { size: 12 } },
       type: 'date',
       tickformat: '%d.%m.%Y',
       showgrid: true,
-      gridcolor: 'rgba(0,0,0,0.08)',
+      gridcolor: tv.grid,
     },
     yaxis: { 
       title: { text: 'Кумулятивная сумма (руб.)', font: { size: 12 } },
       tickformat: ',.0f',
       showgrid: true,
-      gridcolor: 'rgba(0,0,0,0.08)',
+      gridcolor: tv.grid,
     },
     hovermode: 'x unified',
-    hoverlabel: { bgcolor: 'rgba(255,255,255,0.9)', font: { size: 12 } },
+    hoverlabel: { bgcolor: tv.hoverBg, font: { size: 12, color: tv.text } },
     legend: { 
       orientation: 'h', 
       y: -0.2,
@@ -532,8 +1015,8 @@ function renderCumulativeChart() {
       xanchor: 'center',
     },
     margin: { l: 80, r: 30, t: 50, b: 60 },
-    plot_bgcolor: 'rgba(255,255,255,1)',
-    paper_bgcolor: 'rgba(255,255,255,1)',
+    plot_bgcolor: tv.bg,
+    paper_bgcolor: tv.paper,
     font: { size: 12 },
   };
   
@@ -547,8 +1030,9 @@ function renderPieCharts() {
   
   // Expense Pie (Donut)
   const expenseData = chartData.categories.expenses || [];
+  document.getElementById('expensePieEmpty').classList.toggle('d-none', expenseData.length > 0);
   if (expenseData.length > 0) {
-    const colors = ['#0d6efd', '#198754', '#dc3545', '#ffc107', '#6f42c1', '#20c997', '#fd7e14', '#0dcaf0', '#6610f2', '#e83e8c'];
+    const colors = ['#FF6363', '#3B82F6', '#34A853', '#F59E0B', '#8B5CF6', '#10B981', '#EF4444', '#06B6D4', '#6366F1', '#EC4899'];
     const trace = {
       labels: expenseData.map(c => c.category),
       values: expenseData.map(c => c.total),
@@ -585,8 +1069,9 @@ function renderPieCharts() {
   
   // Income Pie (Donut)
   const incomeData = chartData.categories.incomes || [];
+  document.getElementById('incomePieEmpty').classList.toggle('d-none', incomeData.length > 0);
   if (incomeData.length > 0) {
-    const colors = ['#198754', '#0d6efd', '#20c997', '#6f42c1', '#0dcaf0', '#6610f2'];
+    const colors = ['#34A853', '#3B82F6', '#10B981', '#8B5CF6', '#06B6D4', '#6366F1'];
     const trace = {
       labels: incomeData.map(c => c.category),
       values: incomeData.map(c => c.total),
@@ -626,6 +1111,7 @@ function renderBarChart() {
   if (!chartData || !chartData.categories) return;
   
   const expenseData = chartData.categories.expenses || [];
+  document.getElementById('expenseBarEmpty').classList.toggle('d-none', expenseData.length > 0);
   if (expenseData.length === 0) return;
   
   // Сортируем по убыванию для лучшей визуализации
@@ -637,7 +1123,7 @@ function renderBarChart() {
     type: 'bar',
     marker: {
       color: sortedData.map((_, i) => {
-        const colors = ['#dc3545', '#fd7e14', '#ffc107', '#198754', '#0dcaf0', '#0d6efd', '#6f42c1'];
+        const colors = ['#FF6363', '#F59E0B', '#3B82F6', '#34A853', '#8B5CF6', '#10B981', '#EC4899'];
         return colors[i % colors.length];
       }),
       line: { color: '#fff', width: 1 },
@@ -659,8 +1145,8 @@ function renderBarChart() {
       tickformat: ',.0f',
     },
     margin: { l: 70, r: 30, t: 30, b: 100 },
-    plot_bgcolor: 'rgba(255,255,255,1)',
-    paper_bgcolor: 'rgba(255,255,255,1)',
+    plot_bgcolor: themeVars().bg,
+    paper_bgcolor: themeVars().paper,
     font: { size: 12 },
   };
   
@@ -733,12 +1219,7 @@ function toggleMovingAvg() {
   if (chartData) renderTimeSeriesChart();
 }
 
-// Event listeners
-document.getElementById('groupBy')?.addEventListener('change', loadDashboardData);
-document.getElementById('categoryFilter')?.addEventListener('change', loadDashboardData);
-document.getElementById('showProfitFill')?.addEventListener('change', () => {
-  if (chartData) renderTimeSeriesChart();
-});
+// Old event listeners removed - charts are now auto-generated
 
 // Load insights
 async function loadInsights() {
@@ -792,37 +1273,88 @@ async function loadFeed() {
   });
 }
 
-// Upload handler
+// Upload handler with progress bar
 const uploadForm = document.getElementById('uploadForm');
 const csrftoken = (document.cookie.match(/csrftoken=([^;]+)/)||[])[1];
 if (uploadForm) {
   uploadForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(uploadForm);
-    const res = await fetch('/api/upload/', { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken || '' } });
-    const data = await res.json();
-    if (!data.ok) { alert(data.error || 'Ошибка загрузки'); return; }
-    loadDashboardData();
-    loadInsights();
-    loadFeed();
+    const progressDiv = document.getElementById('uploadProgress');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const submitBtn = document.getElementById('uploadBtn');
+    
+    try {
+      submitBtn?.setAttribute('disabled','disabled');
+      progressDiv?.classList.remove('d-none');
+      progressBar.style.width = '10%';
+      progressText.textContent = 'Подготовка к загрузке...';
+      
+      setProcessing(true, 'Файл обрабатывается…', 'Это может занять до 10 сек.');
+      if (typeof showToast === 'function') showToast('Загрузка началась', 'info');
+      
+      // Simulate progress
+      let progress = 10;
+      const progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressBar.style.width = progress + '%';
+        if (progress < 40) {
+          progressText.textContent = 'Загрузка файла...';
+        } else if (progress < 70) {
+          progressText.textContent = 'Анализ данных...';
+        } else {
+          progressText.textContent = 'Обработка завершается...';
+        }
+      }, 300);
+      
+      const res = await fetch('/api/upload/', { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrftoken || '' } });
+      clearInterval(progressInterval);
+      progressBar.style.width = '100%';
+      progressText.textContent = 'Готово!';
+      
+      const data = await res.json();
+      if (!data.ok) { 
+        if (typeof showToast === 'function') showToast(data.error || 'Ошибка загрузки', 'danger', 5000);
+        setProcessing(false);
+        submitBtn?.removeAttribute('disabled');
+        progressDiv?.classList.add('d-none');
+        return; 
+      }
+      
+      setProcessing(false);
+      
+      setTimeout(() => {
+        progressDiv?.classList.add('d-none');
+        progressBar.style.width = '0%';
+      }, 1000);
+      
+      // Immediately reload and render charts from real DB data
+      if (typeof showToast === 'function') showToast('Файл загружен, обновляем графики', 'success');
+      await Promise.all([loadDashboardData(), loadInsights(), loadFeed()]);
+    } catch (err) {
+      console.error(err);
+      if (typeof showToast === 'function') showToast('Ошибка обработки файла', 'danger', 5000);
+      setProcessing(false);
+      progressDiv?.classList.add('d-none');
+    } finally {
+      submitBtn?.removeAttribute('disabled');
+      uploadForm.reset();
+    }
   });
 }
 
-// Устанавливаем даты по умолчанию (последние 3 месяца)
-function setDefaultDates() {
-  const endDate = new Date();
-  const startDate = new Date();
-  startDate.setMonth(startDate.getMonth() - 3);
-  
+// После загрузки данных синхронизируем инпуты с фактическим диапазоном
+let dateInputsInitialised = false;
+function syncDateRangeInputs(data) {
+  if (dateInputsInitialised) return;
+  if (!data || !data.daily || !Array.isArray(data.daily.dates) || data.daily.dates.length === 0) return;
   const startInput = document.getElementById('dateStart');
   const endInput = document.getElementById('dateEnd');
-  
-  if (startInput && !startInput.value) {
-    startInput.value = startDate.toISOString().split('T')[0];
-  }
-  if (endInput && !endInput.value) {
-    endInput.value = endDate.toISOString().split('T')[0];
-  }
+  if (startInput && !startInput.value) startInput.value = data.daily.dates[0];
+  if (endInput && !endInput.value) endInput.value = data.daily.dates[data.daily.dates.length - 1];
+  dateInputsInitialised = true;
 }
 
 // Initialize
@@ -835,11 +1367,18 @@ document.getElementById('filterForm')?.addEventListener('submit', (e) => {
   loadFeed();
 });
 
+// Initialize - load real data from DB
 window.addEventListener('load', () => {
-  setDefaultDates();
   loadFeed();
   loadInsights();
-  loadDashboardData();
+  loadDashboardData(); // This will render charts from real DB data
+});
+
+// Re-render charts on theme change
+document.addEventListener('theme:changed', () => {
+  if (dashboardData && dashboardData.ok) {
+    renderChartsFromDB(dashboardData);
+  }
 });
 </script>
 {% endblock %}

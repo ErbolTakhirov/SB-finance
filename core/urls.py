@@ -12,6 +12,7 @@ urlpatterns = [
     path('ai/insights/', views.ai_insights_api, name='ai_insights_api'),
     path('api/dashboard/data/', views.dashboard_data_api, name='dashboard_data_api'),
     path('api/upload/', views.upload_api, name='upload_api'),
+    path('api/auto-charts/custom/', views.auto_chart_custom_api, name='auto_chart_custom_api'),
     path('ai/chat/', views.ai_chat_api, name='ai_chat_api'),
     
     # Авторизация
